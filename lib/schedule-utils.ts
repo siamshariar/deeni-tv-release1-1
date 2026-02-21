@@ -92,12 +92,7 @@ export const FALLBACK_VIDEOS: VideoProgram[] = [
   }
 ]
 
-// Track video failures
-const videoFailureCount: Map<string, number> = new Map()
-const MAX_FAILURES = 3
-
-// Master epoch start - THIS IS THE KEY TO PERFECT SYNC
-// All users calculate their position based on this absolute timestamp
+// Master epoch start - ALL USERS SYNC TO THIS
 export const MASTER_EPOCH_START = Date.UTC(2024, 0, 1, 0, 0, 0) // 2024-01-01 00:00:00 UTC
 export const SCHEDULE_VERSION = '1.0.0'
 
@@ -106,40 +101,8 @@ export function getTotalScheduleDuration() {
 }
 
 /**
- * Check if a video is likely embeddable
- */
-export function isVideoEmbeddable(videoId: string): boolean {
-  const failures = videoFailureCount.get(videoId) || 0
-  return failures < MAX_FAILURES
-}
-
-/**
- * Record a video failure
- */
-export function recordVideoFailure(videoId: string) {
-  const current = videoFailureCount.get(videoId) || 0
-  videoFailureCount.set(videoId, current + 1)
-  console.warn(`Video ${videoId} failed ${current + 1} times`)
-}
-
-/**
- * Reset failure count for a video
- */
-export function resetVideoFailures(videoId: string) {
-  videoFailureCount.delete(videoId)
-}
-
-/**
- * Get a fallback video
- */
-export function getFallbackVideo(): VideoProgram {
-  const index = Math.floor(Date.now() / 3600000) % FALLBACK_VIDEOS.length
-  return FALLBACK_VIDEOS[index]
-}
-
-/**
  * Calculate which video should be playing right now
- * THIS FUNCTION RETURNS THE EXACT SAME RESULT FOR ALL USERS AT THE SAME MOMENT
+ * ALL USERS GET THE EXACT SAME RESULT AT THE SAME MOMENT
  */
 export function getCurrentProgram(): CurrentVideoData & { 
   nextProgramStartTime: number, 
@@ -150,12 +113,11 @@ export function getCurrentProgram(): CurrentVideoData & {
   const now = Date.now()
   const totalDuration = getTotalScheduleDuration()
   
-  // Calculate position from master epoch - THIS IS THE KEY
-  // Every user calculates the same elapsed time from the same starting point
+  // Calculate position from master epoch
   const elapsedSinceEpoch = Math.floor((now - MASTER_EPOCH_START) / 1000)
   const cyclePosition = elapsedSinceEpoch % totalDuration
   
-  // Find which program is currently playing
+  // Find current program
   let accumulatedTime = 0
   let currentProgram = SCHEDULE[0]
   let currentTime = 0
@@ -172,41 +134,35 @@ export function getCurrentProgram(): CurrentVideoData & {
     accumulatedTime += program.duration
   }
   
-  const embeddable = isVideoEmbeddable(currentProgram.videoId)
-  const finalProgram = embeddable ? currentProgram : getFallbackVideo()
-  const finalIndex = embeddable ? programIndex : -1
+  const nextProgram = SCHEDULE[(programIndex + 1) % SCHEDULE.length]
   
-  const nextProgram = embeddable 
-    ? SCHEDULE[(programIndex + 1) % SCHEDULE.length]
-    : getFallbackVideo()
-  
-  // Calculate when the next program starts (absolute timestamp)
+  // Calculate when the next program starts
   const currentCycleStart = MASTER_EPOCH_START + 
     Math.floor((now - MASTER_EPOCH_START) / totalDuration / 1000) * totalDuration * 1000
   
   const nextProgramStartTime = currentCycleStart + 
     (accumulatedTime + currentProgram.duration) * 1000
   
-  const timeRemaining = finalProgram.duration - currentTime
+  const timeRemaining = currentProgram.duration - currentTime
   
   return {
-    program: finalProgram,
+    program: currentProgram,
     currentTime,
     timeRemaining,
     nextProgram,
     serverTime: now,
-    programIndex: finalIndex,
+    programIndex,
     epochStart: MASTER_EPOCH_START,
     nextProgramStartTime,
     scheduleVersion: SCHEDULE_VERSION,
-    usingFallback: !embeddable,
+    usingFallback: false,
     absoluteCurrentTime: currentTime,
     cyclePosition
   }
 }
 
 /**
- * Get upcoming programs with scheduled preload times
+ * Get upcoming programs
  */
 export function getUpcomingPrograms(count: number = 15) {
   const current = getCurrentProgram()
@@ -216,7 +172,6 @@ export function getUpcomingPrograms(count: number = 15) {
   const nextStartTimes: number[] = []
   const nextStartAbsolute: number[] = []
   const programIndices: number[] = []
-  const scheduledPreloads: { programId: string, preloadTime: number, videoId: string }[] = []
 
   let offset = current.timeRemaining
   let absoluteTime = current.nextProgramStartTime
@@ -225,24 +180,11 @@ export function getUpcomingPrograms(count: number = 15) {
     const index = (currentIndex + i) % SCHEDULE.length
     const prog = SCHEDULE[index]
     
-    const embeddable = isVideoEmbeddable(prog.videoId)
-    const finalProg = embeddable ? prog : getFallbackVideo()
-    
-    upcoming.push(finalProg)
-    programIndices.push(embeddable ? index : -1)
+    upcoming.push(prog)
+    programIndices.push(index)
 
     nextStartTimes.push(offset)
     nextStartAbsolute.push(absoluteTime)
-    
-    // Schedule preload 5 minutes before program starts
-    const preloadTime = absoluteTime - (5 * 60 * 1000)
-    if (preloadTime > Date.now()) {
-      scheduledPreloads.push({
-        programId: finalProg.id,
-        preloadTime,
-        videoId: finalProg.videoId
-      })
-    }
 
     offset += prog.duration
     absoluteTime += prog.duration * 1000
@@ -252,26 +194,12 @@ export function getUpcomingPrograms(count: number = 15) {
     upcoming,
     nextStartTimes,
     nextStartAbsolute,
-    programIndices,
-    scheduledPreloads
+    programIndices
   }
 }
 
 /**
- * Check for scheduled preloads
- */
-export function checkScheduledPreloads(): { programId: string, preloadTime: number, videoId: string }[] {
-  const now = Date.now()
-  const { scheduledPreloads } = getUpcomingPrograms(20)
-  
-  return scheduledPreloads.filter(preload => 
-    preload.preloadTime <= now + 1000 &&
-    preload.preloadTime > now - 5000
-  )
-}
-
-/**
- * Format time
+ * Format time in seconds to MM:SS or HH:MM:SS
  */
 export function formatTime(seconds: number): string {
   if (seconds < 0) seconds = 0
@@ -287,14 +215,21 @@ export function formatTime(seconds: number): string {
 }
 
 /**
- * Format duration
+ * Format duration in seconds to human readable format
  */
 export function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds} secs`
+  
   const hours = Math.floor(seconds / 3600)
   const mins = Math.floor((seconds % 3600) / 60)
   
   if (hours > 0) {
-    return `${hours}h ${mins}m`
+    if (mins > 0) {
+      return `${hours}h ${mins}m`
+    }
+    return `${hours}h`
   }
+  
+  if (mins === 1) return `${mins} min`
   return `${mins} mins`
 }
