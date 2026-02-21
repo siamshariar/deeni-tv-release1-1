@@ -4,6 +4,7 @@ import { getCurrentProgram, SCHEDULE, SCHEDULE_VERSION, MASTER_EPOCH_START } fro
 export async function GET() {
   try {
     const data = getCurrentProgram()
+    const serverTime = Date.now()
     
     const headers = {
       'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
@@ -11,8 +12,6 @@ export async function GET() {
       'Expires': '0',
       'Surrogate-Control': 'no-store',
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
     }
     
     return NextResponse.json({
@@ -23,17 +22,14 @@ export async function GET() {
         isFirstInCycle: data.programIndex === 0,
         totalPrograms: SCHEDULE.length,
         scheduleVersion: SCHEDULE_VERSION,
-        masterEpoch: MASTER_EPOCH_START // Send master epoch to client for local calculations
+        masterEpoch: MASTER_EPOCH_START
       },
-      serverTimestamp: Date.now()
+      serverTimestamp: serverTime // CRITICAL: For clock drift correction
     }, { headers })
   } catch (error) {
     console.error('Error fetching current video:', error)
     return NextResponse.json(
-      { 
-        success: false, 
-        error: 'Failed to fetch current video' 
-      },
+      { success: false, error: 'Failed to fetch current video' },
       { status: 500, headers: { 'Cache-Control': 'no-store' } }
     )
   }
