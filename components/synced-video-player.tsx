@@ -772,7 +772,7 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
                 {currentProgram.description}
               </p>
             )}
-            <div className={`flex items-center gap-4 mt-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+            {/* <div className={`flex items-center gap-4 mt-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
               <div className="flex items-center gap-2">
                 <Clock className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} text-primary`} />
                 <span className="text-white font-semibold">{displayTime} / {formatTime(currentProgram.duration)}</span>
@@ -783,7 +783,7 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
                   <span className="text-white/80">Next in {timeRemaining}</span>
                 </div>
               )}
-            </div>
+            </div> */}
           </div>
         )}
       </div>
