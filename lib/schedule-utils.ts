@@ -202,6 +202,9 @@ export const CHANNELS: Channel[] = [
   }
 ]
 
+// Export SCHEDULE for backward compatibility (uses Bengali channel programs)
+export const SCHEDULE: VideoProgram[] = BENGALI_VIDEOS
+
 // Types for scheduled preloads
 export interface ScheduledPreload {
   programId: string

@@ -801,44 +801,43 @@ export function SyncedVideoPlayer({
           {!showStartScreen && !isLoading && !apiError && playerReady && currentProgram && (
             <>
               {/* TOP SECTION - Different for desktop vs mobile */}
-              {!isMobile ? (
-                // DESKTOP TOP SECTION - Full layout
-                <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/80 via-black/40 to-transparent pt-6 pb-12 px-6">
-                  <div className="flex items-center gap-4">
-                    <LiveBadge isMobile={false} />
-                    <div className="flex-1">
-                      <h2 className="text-white font-bold text-lg sm:text-xl line-clamp-1">
-                        {currentProgram.title}
-                      </h2>
-                      <p className="text-white/60 text-xs sm:text-sm mt-1">
-                        {currentProgram.category || 'Program'} • {cycleInfo.current}/{cycleInfo.total} • {
-                          channels.find(c => c.id === currentChannelId)?.name
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                // MOBILE TOP SECTION - Only shown when player is open
-                showControls && (
-                  <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/80 via-black/40 to-transparent pt-3 pb-6 px-2">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <LiveBadge isMobile={true} />
-                        <span className="text-white/60 text-[8px]">
-                          {cycleInfo.current}/{cycleInfo.total} • {channels.find(c => c.id === currentChannelId)?.name}
-                        </span>
-                      </div>
-                      <h2 className="text-white font-bold text-xs line-clamp-1">
-                        {currentProgram.title}
-                      </h2>
-                      <p className="text-white/60 text-[8px]">
-                        {currentProgram.category || 'Program'}
-                      </p>
-                    </div>
-                  </div>
-                )
-              )}
+// Replace the mobile top section in the Player UI part with this:
+
+{!isMobile ? (
+  // DESKTOP TOP SECTION - Full layout (unchanged)
+  <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/80 via-black/40 to-transparent pt-6 pb-12 px-6">
+    <div className="flex items-center gap-4">
+      <LiveBadge isMobile={false} />
+      <div className="flex-1">
+        <h2 className="text-white font-bold text-lg sm:text-xl line-clamp-1">
+          {currentProgram.title}
+        </h2>
+        <p className="text-white/60 text-xs sm:text-sm mt-1">
+          {currentProgram.category || 'Program'} • {cycleInfo.current}/{cycleInfo.total} • {
+            channels.find(c => c.id === currentChannelId)?.name
+          }
+        </p>
+      </div>
+    </div>
+  </div>
+) : (
+  // MOBILE TOP SECTION - Always visible, never hides
+  <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/80 via-black/40 to-transparent pt-2 pb-4 px-2">
+    <div className="flex items-start gap-2">
+      <LiveBadge isMobile={true} />
+      <div className="flex-1 min-w-0">
+        <h2 className="text-white font-bold text-xs sm:text-sm line-clamp-1">
+          {currentProgram.title}
+        </h2>
+        <p className="text-white/60 text-[9px] sm:text-xs mt-0.5 line-clamp-1">
+          {currentProgram.category || 'Program'} • {cycleInfo.current}/{cycleInfo.total} • {
+            channels.find(c => c.id === currentChannelId)?.name
+          }
+        </p>
+      </div>
+    </div>
+  </div>
+)}
 
               {/* BOTTOM TICKER - Different for desktop vs mobile */}
               {showTicker && (

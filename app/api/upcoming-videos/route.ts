@@ -1,19 +1,20 @@
 import { NextResponse } from 'next/server'
-import { getCurrentProgram, getUpcomingPrograms, SCHEDULE, SCHEDULE_VERSION, MASTER_EPOCH_START } from '@/lib/schedule-utils'
+import { getCurrentProgram, getUpcomingPrograms, SCHEDULE_VERSION, MASTER_EPOCH_START } from '@/lib/schedule-utils'
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const count = parseInt(searchParams.get('count') || '15')
+    const channelId = searchParams.get('channel') || 'bangla-1'
     
-    const current = getCurrentProgram()
+    const current = getCurrentProgram(channelId)
     const { 
       upcoming, 
       nextStartTimes, 
       nextStartAbsolute, 
       programIndices,
       scheduledPreloads 
-    } = getUpcomingPrograms(count)
+    } = getUpcomingPrograms(channelId, count)
     
     const headers = {
       'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
     
     const upcomingWithMeta = upcoming.map((program, index) => ({
       ...program,
-      isFirstInNextCycle: programIndices[index] === 0 && current.programIndex === SCHEDULE.length - 1,
+      isFirstInNextCycle: programIndices[index] === 0 && current.programIndex === current.totalPrograms - 1,
       isWrapAround: programIndices[index] < current.programIndex,
       startTime: nextStartTimes[index],
       absoluteStartTime: nextStartAbsolute[index],
@@ -47,10 +48,10 @@ export async function GET(request: Request) {
         scheduledPreloads,
         serverTime: Date.now(),
         epochStart: MASTER_EPOCH_START,
-        totalPrograms: SCHEDULE.length,
+        totalPrograms: current.totalPrograms,
         scheduleVersion: SCHEDULE_VERSION,
-        isLastInCycle: current.programIndex === SCHEDULE.length - 1,
-        willWrapToFirst: current.programIndex === SCHEDULE.length - 1
+        isLastInCycle: current.programIndex === current.totalPrograms - 1,
+        willWrapToFirst: current.programIndex === current.totalPrograms - 1
       }
     }, { headers })
   } catch (error) {
