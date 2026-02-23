@@ -1,6 +1,6 @@
-import { getUpcomingPrograms, checkScheduledPreloads } from './schedule-utils'
+import { getUpcomingPrograms, checkScheduledPreloads, ScheduledPreload } from './schedule-utils'
 
-type PreloadCallback = (preload: { programId: string, videoId: string }) => void
+type PreloadCallback = (preload: { programId: string; videoId: string }) => void
 type SwitchCallback = (programId: string) => void
 
 class SchedulingService {
@@ -30,7 +30,7 @@ class SchedulingService {
   /**
    * Start monitoring for preload schedules
    */
-  private startMonitoring() {
+  private startMonitoring(): void {
     // Check every second for due preloads
     this.checkInterval = setInterval(() => {
       this.checkSchedules()
@@ -40,7 +40,7 @@ class SchedulingService {
   /**
    * Check for due preloads
    */
-  private checkSchedules() {
+  private checkSchedules(): void {
     const now = Date.now()
     
     if (now - this.lastCheckTime < 100) return // Prevent too frequent checks
@@ -48,7 +48,7 @@ class SchedulingService {
     
     const duePreloads = checkScheduledPreloads()
     
-    duePreloads.forEach(preload => {
+    duePreloads.forEach((preload: ScheduledPreload) => {
       const preloadKey = `${preload.programId}-${preload.preloadTime}`
       
       if (this.processedPreloads.has(preloadKey)) return
@@ -78,7 +78,7 @@ class SchedulingService {
   /**
    * Schedule a program switch (called when program ends)
    */
-  public scheduleSwitch(programId: string, switchTime: number, videoId: string) {
+  public scheduleSwitch(programId: string, switchTime: number, videoId: string): void {
     const now = Date.now()
     const delay = switchTime - now
     
@@ -106,15 +106,15 @@ class SchedulingService {
   /**
    * Schedule all upcoming preloads and switches
    */
-  public scheduleAll() {
-    const { scheduledPreloads } = getUpcomingPrograms(20)
+  public scheduleAll(): void {
+    const { scheduledPreloads } = getUpcomingPrograms('bangla-1', 20)
     
     // Clear old timers
     this.preloadTimers.forEach(timer => clearTimeout(timer))
     this.preloadTimers.clear()
     
     // Schedule preloads
-    scheduledPreloads.forEach(preload => {
+    scheduledPreloads.forEach((preload: ScheduledPreload) => {
       const now = Date.now()
       const delay = preload.preloadTime - now
       
@@ -137,7 +137,7 @@ class SchedulingService {
   /**
    * Register preload callback
    */
-  public onPreload(callback: PreloadCallback) {
+  public onPreload(callback: PreloadCallback): () => void {
     this.preloadCallbacks.push(callback)
     return () => {
       this.preloadCallbacks = this.preloadCallbacks.filter(cb => cb !== callback)
@@ -147,7 +147,7 @@ class SchedulingService {
   /**
    * Register switch callback
    */
-  public onSwitch(callback: SwitchCallback) {
+  public onSwitch(callback: SwitchCallback): () => void {
     this.switchCallbacks.push(callback)
     return () => {
       this.switchCallbacks = this.switchCallbacks.filter(cb => cb !== callback)
@@ -157,7 +157,7 @@ class SchedulingService {
   /**
    * Stop all timers
    */
-  public destroy() {
+  public destroy(): void {
     if (this.checkInterval) {
       clearInterval(this.checkInterval)
       this.checkInterval = null
@@ -175,7 +175,7 @@ class SchedulingService {
   /**
    * Reset service
    */
-  public reset() {
+  public reset(): void {
     this.destroy()
     if (typeof window !== 'undefined') {
       this.startMonitoring()

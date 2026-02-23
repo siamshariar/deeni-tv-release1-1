@@ -9,6 +9,15 @@ export interface VideoProgram {
   category: string
   language: string
   thumbnail?: string
+  channelId: string
+}
+
+export interface Channel {
+  id: string
+  name: string
+  language: string
+  icon?: string
+  programs: VideoProgram[]
 }
 
 export interface CurrentVideoData {
@@ -19,20 +28,18 @@ export interface CurrentVideoData {
   serverTime: number
   programIndex: number
   epochStart?: number
-  nextProgramStartTime?: number // timestamp when next program starts
+  nextProgramStartTime?: number
+  usingFallback?: boolean
 }
 
-export interface UpcomingProgramInfo {
-  program: VideoProgram
-  startTime: number // relative seconds from now
-  absoluteStartTime: number // timestamp
-  isFirstInNextCycle: boolean
-  isWrapAround: boolean
-}
-
-export interface ScheduledUpdate {
-  programId: string
-  scheduledTime: number // timestamp when to update
-  videoId: string
-  action: 'preload' | 'switch'
+export interface ApiResponse {
+  success: boolean
+  data: CurrentVideoData & {
+    nextProgramStartTime: number
+    scheduleVersion: string
+    totalPrograms: number
+    isLastInCycle: boolean
+    channelId: string
+  }
+  serverTimestamp: number
 }

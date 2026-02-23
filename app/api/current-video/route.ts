@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getCurrentProgram, SCHEDULE, SCHEDULE_VERSION, MASTER_EPOCH_START } from '@/lib/schedule-utils'
+import { getCurrentProgram, CHANNELS, SCHEDULE_VERSION, MASTER_EPOCH_START } from '@/lib/schedule-utils'
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const data = getCurrentProgram()
+    const { searchParams } = new URL(request.url)
+    const channelId = searchParams.get('channel') || CHANNELS[0].id
+    
+    const data = getCurrentProgram(channelId)
     const serverTime = Date.now()
     
     const headers = {
@@ -18,13 +21,13 @@ export async function GET() {
       success: true,
       data: {
         ...data,
-        isLastInCycle: data.programIndex === SCHEDULE.length - 1,
+        isLastInCycle: data.programIndex === data.totalPrograms - 1,
         isFirstInCycle: data.programIndex === 0,
-        totalPrograms: SCHEDULE.length,
         scheduleVersion: SCHEDULE_VERSION,
-        masterEpoch: MASTER_EPOCH_START
+        masterEpoch: MASTER_EPOCH_START,
+        availableChannels: CHANNELS.map(c => ({ id: c.id, name: c.name, language: c.language, icon: c.icon }))
       },
-      serverTimestamp: serverTime // CRITICAL: For clock drift correction
+      serverTimestamp: serverTime
     }, { headers })
   } catch (error) {
     console.error('Error fetching current video:', error)

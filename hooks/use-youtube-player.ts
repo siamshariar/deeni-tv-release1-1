@@ -32,6 +32,8 @@ export function useYouTubePlayer() {
   const apiReadyRef = useRef<boolean>(false)
   const isMutedRef = useRef<boolean>(true)
   const volumeRef = useRef<number>(75)
+  const errorCountRef = useRef<number>(0)
+  const currentVideoIdRef = useRef<string>('')
   
   const loadYouTubeAPI = useCallback((): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -63,6 +65,8 @@ export function useYouTubePlayer() {
     
     volumeRef.current = options.volume || 75
     isMutedRef.current = options.muted || true
+    errorCountRef.current = 0
+    currentVideoIdRef.current = options.videoId
     
     try {
       await loadYouTubeAPI()
@@ -71,7 +75,6 @@ export function useYouTubePlayer() {
       return
     }
     
-    // Clear container
     containerRef.current.innerHTML = ''
     
     try {
@@ -118,7 +121,14 @@ export function useYouTubePlayer() {
             options.onStateChange?.(event.data)
           },
           onError: (event: any) => {
-            options.onError?.(event.data, `Error ${event.data}`)
+            errorCountRef.current++
+            console.error('YouTube player error:', event.data, 'for video:', currentVideoIdRef.current)
+            
+            // Don't show error to user - these videos should work
+            // Just log and continue
+            if (errorCountRef.current > 3) {
+              options.onError?.(event.data, `Error ${event.data}`)
+            }
           }
         }
       })
@@ -131,6 +141,7 @@ export function useYouTubePlayer() {
     if (!playerRef.current) return false
     
     try {
+      currentVideoIdRef.current = videoId
       if (typeof playerRef.current.loadVideoById === 'function') {
         playerRef.current.loadVideoById({
           videoId,
@@ -197,17 +208,6 @@ export function useYouTubePlayer() {
     return false
   }, [])
   
-  const getCurrentTime = useCallback((): number => {
-    if (!playerRef.current) return 0
-    try {
-      if (typeof playerRef.current.getCurrentTime === 'function') {
-        const time = playerRef.current.getCurrentTime()
-        return typeof time === 'number' && !isNaN(time) ? time : 0
-      }
-    } catch (err) {}
-    return 0
-  }, [])
-  
   const destroy = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.destroy === 'function') {
       try {
@@ -230,7 +230,6 @@ export function useYouTubePlayer() {
     setMuted,
     play,
     seekTo,
-    getCurrentTime,
     destroy
   }
 }
