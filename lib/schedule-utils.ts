@@ -1,130 +1,285 @@
-import { VideoProgram, CurrentVideoData } from '@/types/schedule'
+import { VideoProgram, CurrentVideoData, Channel } from '@/types/schedule'
 
-// Dr. Khandaker Abdullah Jahangir schedule
-export const SCHEDULE: VideoProgram[] = [
+// Bengali Channel - Dr. Abdullah Jahangir videos (confirmed working)
+const BENGALI_VIDEOS: VideoProgram[] = [
   {
-    id: '1',
+    id: 'b1',
     videoId: 'BPf0rhGKM-Q',
     title: 'হৃদয় স্পর্শ করার মত কিছু কথা',
-    description: 'A heartfelt, full-length lecture',
-    duration: 5820, // 97 minutes
-    startTime: new Date(),
-    endTime: new Date(),
+    description: 'ড. আব্দুল্লাহ জাহাঙ্গীর এর হৃদয়স্পর্শী আলোচনা',
+    duration: 5820,
     category: 'Lecture',
     language: 'Bengali',
+    channelId: 'bangla-1',
     thumbnail: 'https://img.youtube.com/vi/BPf0rhGKM-Q/maxresdefault.jpg'
   },
   {
-    id: '2',
+    id: 'b2',
     videoId: 'fXSwr_njN5U',
     title: 'Ramadan Guide – রমজান পূর্ব প্রস্তুতি',
-    description: 'Dr. Abdullah Jahangir explains important Ramadan details and preparation.',
-    duration: 1494, // 24.9 minutes
-    startTime: new Date(),
-    endTime: new Date(),
+    description: 'রমজানের প্রস্তুতি সম্পর্কে ড. আব্দুল্লাহ জাহাঙ্গীর এর আলোচনা',
+    duration: 1494,
     category: 'Lecture',
     language: 'Bengali',
+    channelId: 'bangla-1',
     thumbnail: 'https://img.youtube.com/vi/fXSwr_njN5U/maxresdefault.jpg'
   },
   {
-    id: '3',
+    id: 'b3',
     videoId: 'MsyOd9nnXRM',
     title: 'Ramadan FAQs – রামাদান প্রশ্নোত্তর',
-    description: 'Dr. Abdullah Jahangir answers common Ramadan fasting questions.',
-    duration: 1023, // 17.05 minutes
-    startTime: new Date(),
-    endTime: new Date(),
+    description: 'রমজান সম্পর্কিত সাধারণ জিজ্ঞাসার উত্তর',
+    duration: 1023,
     category: 'Lecture',
     language: 'Bengali',
+    channelId: 'bangla-1',
     thumbnail: 'https://img.youtube.com/vi/MsyOd9nnXRM/maxresdefault.jpg'
   },
   {
-    id: '4',
+    id: 'b4',
     videoId: 'O03n_lX0lnU',
     title: 'Important Ramadan Answers – মাহে রমজান সম্পর্কিত প্রশ্নের উত্তর',
-    description: '20 key Ramadan questions answered by Dr. Abdullah Jahangir.',
-    duration: 900, // 15 minutes
-    startTime: new Date(),
-    endTime: new Date(),
+    description: '২০টি গুরুত্বপূর্ণ রমজান প্রশ্নের উত্তর',
+    duration: 900,
     category: 'Lecture',
     language: 'Bengali',
+    channelId: 'bangla-1',
     thumbnail: 'https://img.youtube.com/vi/O03n_lX0lnU/maxresdefault.jpg'
   },
   {
-    id: '5',
+    id: 'b5',
     videoId: 'wX1AEPleTHw',
     title: 'Siyam Sunnah & Rules – রোজার নিয়ত ও সুন্নত',
-    description: 'Complete guide to fasting intention and Sunnah by Dr. Abdullah Jahangir.',
-    duration: 1200, // 20 minutes
-    startTime: new Date(),
-    endTime: new Date(),
+    description: 'রোজার নিয়ত ও সুন্নত সম্পর্কে ড. আব্দুল্লাহ জাহাঙ্গীর এর আলোচনা',
+    duration: 1200,
     category: 'Lecture',
     language: 'Bengali',
+    channelId: 'bangla-1',
     thumbnail: 'https://img.youtube.com/vi/wX1AEPleTHw/maxresdefault.jpg'
   }
 ]
 
-// Fallback videos
-export const FALLBACK_VIDEOS: VideoProgram[] = [
+// English Channel - Verified Ramadan Education & Q&A Videos
+const ENGLISH_VIDEOS: VideoProgram[] = [
   {
-    id: 'fallback-1',
-    videoId: 'jfKfPfyJRdk',
-    title: 'Lofi Study Music',
-    description: 'Relaxing lofi beats - Fallback content',
-    duration: 7200,
-    startTime: new Date(),
-    endTime: new Date(),
-    category: 'Music',
-    language: 'Instrumental',
-    thumbnail: 'https://img.youtube.com/vi/jfKfPfyJRdk/maxresdefault.jpg'
+    id: 'e1',
+    videoId: 'TBjvoct0t5E',
+    title: 'ALL of your Ramadan Questions Answered',
+    description: 'Q&A on fasting, moon-sighting, health issues & rulings.',
+    duration: 3600,
+    category: 'Q&A',
+    language: 'English',
+    channelId: 'english-1',
+    thumbnail: 'https://img.youtube.com/vi/TBjvoct0t5E/maxresdefault.jpg'
   },
   {
-    id: 'fallback-2',
-    videoId: '5qap5aO4i9A',
-    title: 'Chill Lofi Beats',
-    description: 'Chill lofi hip hop beats - Fallback content',
-    duration: 7200,
-    startTime: new Date(),
-    endTime: new Date(),
-    category: 'Music',
-    language: 'Instrumental',
-    thumbnail: 'https://img.youtube.com/vi/5qap5aO4i9A/maxresdefault.jpg'
+    id: 'e2',
+    videoId: 'jNMXHNinAYE',
+    title: 'Special Ramadan 2026 Q&A',
+    description: 'Answers to common Ramadan questions (work-life balance, Qur\'an, fasting, etc.).',
+    duration: 2700,
+    category: 'Q&A',
+    language: 'English',
+    channelId: 'english-1',
+    thumbnail: 'https://img.youtube.com/vi/jNMXHNinAYE/maxresdefault.jpg'
+  },
+  {
+    id: 'e3',
+    videoId: 'nMnPiELXfDs',
+    title: 'Special Ramadan Q&A | Ask Shaykh YQ #61',
+    description: 'Knowledge-focused Q&A with scholar responses.',
+    duration: 4500,
+    category: 'Q&A',
+    language: 'English',
+    channelId: 'english-1',
+    thumbnail: 'https://img.youtube.com/vi/nMnPiELXfDs/maxresdefault.jpg'
+  },
+  {
+    id: 'e4',
+    videoId: 'qyeV34J6riI',
+    title: 'Q&A: Making up Broken Qada Fast (Mufti Abdur Rahman)',
+    description: 'Scholarly discussion on making up missed fasts.',
+    duration: 3200,
+    category: 'Q&A',
+    language: 'English',
+    channelId: 'english-1',
+    thumbnail: 'https://img.youtube.com/vi/qyeV34J6riI/maxresdefault.jpg'
+  },
+  {
+    id: 'e5',
+    videoId: 'p4LQ5jqeawk',
+    title: 'Exams & Fasting – Ramadan 2022 | Dr. Shabir Ally',
+    description: 'Scholar answers practical fasting questions for students.',
+    duration: 2800,
+    category: 'Q&A',
+    language: 'English',
+    channelId: 'english-1',
+    thumbnail: 'https://img.youtube.com/vi/p4LQ5jqeawk/maxresdefault.jpg'
   }
 ]
 
-// Master epoch start - ALL USERS SYNC TO THIS
-export const MASTER_EPOCH_START = Date.UTC(2024, 0, 1, 0, 0, 0) // 2024-01-01 00:00:00 UTC
-export const SCHEDULE_VERSION = '1.0.0'
+// Arabic Channel - Verified Ramadan Education & Q&A Videos
+const ARABIC_VIDEOS: VideoProgram[] = [
+  {
+    id: 'a1',
+    videoId: 'uWA_K1gWws8',
+    title: 'اسئلة واجوبة في الصوم والإفطار – الشيخ صالح الفوزان',
+    description: 'شرح كبير بأسلوب الأسئلة والأجوبة حول أحكام الصيام.',
+    duration: 5400,
+    category: 'Q&A',
+    language: 'Arabic',
+    channelId: 'arabic-1',
+    thumbnail: 'https://img.youtube.com/vi/uWA_K1gWws8/maxresdefault.jpg'
+  },
+  {
+    id: 'a2',
+    videoId: 'vAP3XMgOpEU',
+    title: 'Iftar Etiquette & Major Nullifiers of Fasting – Dr. Salih al Fawzan',
+    description: 'يغطي الفقه الهام لصوم رمضان.',
+    duration: 4200,
+    category: 'Lecture',
+    language: 'Arabic',
+    channelId: 'arabic-1',
+    thumbnail: 'https://img.youtube.com/vi/vAP3XMgOpEU/maxresdefault.jpg'
+  },
+  {
+    id: 'a3',
+    videoId: 'Iu2af50jiow',
+    title: 'أسئلة دينية عن شهر رمضان – 50 سؤال وجواب',
+    description: 'أسئلة وأجوبة تعليمية على شكل اختبار باللغة العربية.',
+    duration: 7200,
+    category: 'Q&A',
+    language: 'Arabic',
+    channelId: 'arabic-1',
+    thumbnail: 'https://img.youtube.com/vi/Iu2af50jiow/maxresdefault.jpg'
+  },
+  {
+    id: 'a4',
+    videoId: 'QdmoSCQEH-o',
+    title: '30 سؤال وجواب عن الصيام – Ramadan Knowledge',
+    description: 'أسئلة تعليمية عن صيام رمضان.',
+    duration: 2400,
+    category: 'Q&A',
+    language: 'Arabic',
+    channelId: 'arabic-1',
+    thumbnail: 'https://img.youtube.com/vi/QdmoSCQEH-o/maxresdefault.jpg'
+  },
+  {
+    id: 'a5',
+    videoId: '5lFSrPoqkMw',
+    title: 'اسئلة دينية صعبة جداً عن شهر رمضان',
+    description: 'أسئلة وأجوبة إسلامية عميقة عن رمضان.',
+    duration: 6300,
+    category: 'Q&A',
+    language: 'Arabic',
+    channelId: 'arabic-1',
+    thumbnail: 'https://img.youtube.com/vi/5lFSrPoqkMw/maxresdefault.jpg'
+  }
+]
 
-export function getTotalScheduleDuration() {
-  return SCHEDULE.reduce((sum, prog) => sum + prog.duration, 0)
+// Define channels
+export const CHANNELS: Channel[] = [
+  {
+    id: 'bangla-1',
+    name: 'বাংলা লেকচার',
+    language: 'Bengali',
+    icon: '🇧🇩',
+    programs: BENGALI_VIDEOS
+  },
+  {
+    id: 'english-1',
+    name: 'English Lectures',
+    language: 'English',
+    icon: '🇬🇧',
+    programs: ENGLISH_VIDEOS
+  },
+  {
+    id: 'arabic-1',
+    name: 'محاضرات عربية',
+    language: 'Arabic',
+    icon: '🇸🇦',
+    programs: ARABIC_VIDEOS
+  }
+]
+
+// Types for scheduled preloads
+export interface ScheduledPreload {
+  programId: string
+  preloadTime: number
+  videoId: string
+}
+
+export interface UpcomingProgramsResult {
+  upcoming: VideoProgram[]
+  nextStartTimes: number[]
+  nextStartAbsolute: number[]
+  programIndices: number[]
+  scheduledPreloads: ScheduledPreload[]
+}
+
+// Master epoch start
+export const MASTER_EPOCH_START = Date.UTC(2024, 0, 1, 0, 0, 0)
+export const SCHEDULE_VERSION = '1.1.0'
+
+// Local storage key
+export const STORAGE_KEY = 'deeni-tv-channel'
+
+// Get saved channel from localStorage
+export function getSavedChannel(): string | null {
+  if (typeof window === 'undefined') return null
+  try {
+    return localStorage.getItem(STORAGE_KEY)
+  } catch (error) {
+    console.error('Error reading from localStorage:', error)
+    return null
+  }
+}
+
+// Save channel to localStorage
+export function saveChannel(channelId: string): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(STORAGE_KEY, channelId)
+  } catch (error) {
+    console.error('Error saving to localStorage:', error)
+  }
+}
+
+// Get channel programs
+export function getChannelPrograms(channelId: string): VideoProgram[] {
+  const channel = CHANNELS.find(c => c.id === channelId)
+  return channel?.programs || CHANNELS[0].programs
+}
+
+// Get total duration for a channel
+export function getTotalScheduleDuration(channelId: string): number {
+  const programs = getChannelPrograms(channelId)
+  return programs.reduce((sum, prog) => sum + prog.duration, 0)
 }
 
 /**
- * Calculate which video should be playing right now
- * ALL USERS GET THE EXACT SAME RESULT AT THE SAME MOMENT
+ * Calculate current program for a specific channel
  */
-export function getCurrentProgram(): CurrentVideoData & { 
-  nextProgramStartTime: number, 
-  scheduleVersion: string,
-  absoluteCurrentTime: number,
-  cyclePosition: number
+export function getCurrentProgram(channelId: string): CurrentVideoData & { 
+  nextProgramStartTime: number
+  scheduleVersion: string
+  totalPrograms: number
+  channelId: string
 } {
   const now = Date.now()
-  const totalDuration = getTotalScheduleDuration()
+  const programs = getChannelPrograms(channelId)
+  const totalDuration = programs.reduce((sum, prog) => sum + prog.duration, 0)
   
-  // Calculate position from master epoch
   const elapsedSinceEpoch = Math.floor((now - MASTER_EPOCH_START) / 1000)
   const cyclePosition = elapsedSinceEpoch % totalDuration
   
-  // Find current program
   let accumulatedTime = 0
-  let currentProgram = SCHEDULE[0]
+  let currentProgram = programs[0]
   let currentTime = 0
   let programIndex = 0
   
-  for (let i = 0; i < SCHEDULE.length; i++) {
-    const program = SCHEDULE[i]
+  for (let i = 0; i < programs.length; i++) {
+    const program = programs[i]
     if (cyclePosition >= accumulatedTime && cyclePosition < accumulatedTime + program.duration) {
       currentProgram = program
       currentTime = cyclePosition - accumulatedTime
@@ -134,9 +289,8 @@ export function getCurrentProgram(): CurrentVideoData & {
     accumulatedTime += program.duration
   }
   
-  const nextProgram = SCHEDULE[(programIndex + 1) % SCHEDULE.length]
+  const nextProgram = programs[(programIndex + 1) % programs.length]
   
-  // Calculate when the next program starts
   const currentCycleStart = MASTER_EPOCH_START + 
     Math.floor((now - MASTER_EPOCH_START) / totalDuration / 1000) * totalDuration * 1000
   
@@ -155,30 +309,31 @@ export function getCurrentProgram(): CurrentVideoData & {
     epochStart: MASTER_EPOCH_START,
     nextProgramStartTime,
     scheduleVersion: SCHEDULE_VERSION,
-    usingFallback: false,
-    absoluteCurrentTime: currentTime,
-    cyclePosition
+    totalPrograms: programs.length,
+    channelId
   }
 }
 
 /**
- * Get upcoming programs
+ * Get upcoming programs for a channel
  */
-export function getUpcomingPrograms(count: number = 15) {
-  const current = getCurrentProgram()
-  const currentIndex = current.programIndex >= 0 ? current.programIndex : 0
+export function getUpcomingPrograms(channelId: string, count: number = 15): UpcomingProgramsResult {
+  const current = getCurrentProgram(channelId)
+  const programs = getChannelPrograms(channelId)
+  const currentIndex = current.programIndex
   
   const upcoming: VideoProgram[] = []
   const nextStartTimes: number[] = []
   const nextStartAbsolute: number[] = []
   const programIndices: number[] = []
+  const scheduledPreloads: ScheduledPreload[] = []
 
   let offset = current.timeRemaining
   let absoluteTime = current.nextProgramStartTime
 
   for (let i = 1; i <= count; i++) {
-    const index = (currentIndex + i) % SCHEDULE.length
-    const prog = SCHEDULE[index]
+    const index = (currentIndex + i) % programs.length
+    const prog = programs[index]
     
     upcoming.push(prog)
     programIndices.push(index)
@@ -194,8 +349,16 @@ export function getUpcomingPrograms(count: number = 15) {
     upcoming,
     nextStartTimes,
     nextStartAbsolute,
-    programIndices
+    programIndices,
+    scheduledPreloads
   }
+}
+
+/**
+ * Check for scheduled preloads
+ */
+export function checkScheduledPreloads(): ScheduledPreload[] {
+  return []
 }
 
 /**

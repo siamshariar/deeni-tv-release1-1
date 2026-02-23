@@ -4,67 +4,43 @@ import { useState, useEffect } from 'react'
 import { SyncedVideoPlayer } from '@/components/synced-video-player'
 import { MenuDrawer } from '@/components/menu-drawer'
 import { DonateButton } from '@/components/donate-button'
-import { LanguageModal } from '@/components/language-modal'
 import { ScheduleModal } from '@/components/schedule-modal'
 import { AboutModal } from '@/components/about-modal'
-import { ChannelSwitcher, type Channel } from '@/components/channel-switcher'
-import { SCHEDULE } from '@/lib/schedule-utils'
-
-// Placeholder channels data - can be expanded in the future
-const CHANNELS: Channel[] = [
-  {
-    id: '1',
-    name: 'Deeni TV Main',
-    videoId: 'TosSYbyRKXs',
-    thumbnail: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=200&h=200&fit=crop',
-    isLive: true,
-  },
-  {
-    id: '2',
-    name: 'Islamic Lectures',
-    videoId: 'ye6tv8DhnSI',
-    thumbnail: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=200&h=200&fit=crop',
-    isLive: true,
-  },
-  {
-    id: '3',
-    name: 'Quran Recitation',
-    videoId: 'k2ExG9Nc_aA',
-    thumbnail: 'https://images.unsplash.com/photo-1590650153855-d9e808231d41?w=200&h=200&fit=crop',
-    isLive: true,
-  },
-  {
-    id: '4',
-    name: 'Spiritual Guidance',
-    videoId: '7nJhwFCKMVk',
-    thumbnail: 'https://images.unsplash.com/photo-1542816417-0983c9c9ad53?w=200&h=200&fit=crop',
-    isLive: true,
-  },
-]
+import { ChannelSelector } from '@/components/channel-selector'
+import { CHANNELS } from '@/lib/schedule-utils'
 
 export default function Home() {
-  const [activeChannelId, setActiveChannelId] = useState('1')
+  const [activeChannelId, setActiveChannelId] = useState<string>('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isChannelSwitcherOpen, setIsChannelSwitcherOpen] = useState(false)
-  const [activeModal, setActiveModal] = useState<'language' | 'schedule' | 'about' | null>(null)
-  const [currentProgramId, setCurrentProgramId] = useState<string>('1')
+  const [isChannelSelectorOpen, setIsChannelSelectorOpen] = useState(false)
+  const [activeModal, setActiveModal] = useState<'schedule' | 'about' | null>(null)
+  const [currentProgramId, setCurrentProgramId] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
+  const [hasUserInteracted, setHasUserInteracted] = useState(false)
 
-  const activeChannel = CHANNELS.find(ch => ch.id === activeChannelId) || CHANNELS[0]
-
-  // Fetch current program ID from API
+  // Check localStorage for saved channel on initial load
   useEffect(() => {
+    const savedChannel = localStorage.getItem('deeni-tv-channel')
+    if (savedChannel && CHANNELS.some(c => c.id === savedChannel)) {
+      setActiveChannelId(savedChannel)
+      setHasUserInteracted(true)
+    }
+    setIsLoading(false)
+  }, [])
+
+  // Fetch current program ID from API when channel changes
+  useEffect(() => {
+    if (!activeChannelId) return
+
     const fetchCurrentProgram = async () => {
       try {
-        const response = await fetch('/api/current-video')
+        const response = await fetch(`/api/current-video?channel=${activeChannelId}`)
         const result = await response.json()
         if (result.success && result.data) {
           setCurrentProgramId(result.data.program.id)
         }
       } catch (error) {
         console.error('Error fetching current program:', error)
-      } finally {
-        setIsLoading(false)
       }
     }
 
@@ -73,25 +49,44 @@ export default function Home() {
     // Poll for updates every 30 seconds
     const interval = setInterval(fetchCurrentProgram, 30000)
     return () => clearInterval(interval)
-  }, [])
+  }, [activeChannelId])
 
-  const handleSelectChannel = (channel: Channel) => {
-    setActiveChannelId(channel.id)
-    // For now, reload the page to load new channel
-    // In a more advanced implementation, you could update the video player dynamically
-    window.location.reload()
+  const handleSelectChannel = (channelId: string) => {
+    setActiveChannelId(channelId)
+    localStorage.setItem('deeni-tv-channel', channelId)
+    setHasUserInteracted(true)
+    setIsChannelSelectorOpen(false)
   }
 
   const handleMenuOptionSelect = (option: 'language' | 'schedule' | 'about') => {
     setIsMenuOpen(false)
-    // Small delay to allow menu to close before opening modal
-    setTimeout(() => {
-      setActiveModal(option)
-    }, 300)
+    
+    // Map 'language' option to channel selector
+    if (option === 'language') {
+      setTimeout(() => {
+        setIsChannelSelectorOpen(true)
+      }, 300)
+    } else {
+      setTimeout(() => {
+        setActiveModal(option)
+      }, 300)
+    }
   }
 
   const handleCloseModal = () => {
     setActiveModal(null)
+  }
+
+  // If still loading initial state, show minimal loading
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-zinc-950">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-white">Loading Deeni.tv...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -99,10 +94,11 @@ export default function Home() {
       {/* Donate Button - Fixed position */}
       <DonateButton />
       
-      {/* Synchronized Video Player with Integrated Ticker */}
+      {/* Synchronized Video Player */}
       <SyncedVideoPlayer 
         onMenuOpen={() => setIsMenuOpen(true)}
-        onChannelSwitcherOpen={() => setIsChannelSwitcherOpen(true)}
+        initialChannelId={activeChannelId}
+        onChannelChange={setActiveChannelId}
       />
       
       {/* Menu Drawer - Slides from bottom */}
@@ -112,25 +108,29 @@ export default function Home() {
         onSelectOption={handleMenuOptionSelect}
       />
       
-      {/* Channel Switcher - Slides from right */}
-      <ChannelSwitcher
-        isOpen={isChannelSwitcherOpen}
-        onClose={() => setIsChannelSwitcherOpen(false)}
+      {/* Channel/Language Selector */}
+      <ChannelSelector
+        isOpen={isChannelSelectorOpen || (!hasUserInteracted && !activeChannelId)}
+        onClose={() => {
+          setIsChannelSelectorOpen(false)
+          // If user closes without selecting, set default channel
+          if (!activeChannelId) {
+            const defaultChannel = CHANNELS[0].id
+            setActiveChannelId(defaultChannel)
+            localStorage.setItem('deeni-tv-channel', defaultChannel)
+            setHasUserInteracted(true)
+          }
+        }}
         channels={CHANNELS}
-        activeChannelId={activeChannelId}
         onSelectChannel={handleSelectChannel}
+        currentChannelId={activeChannelId}
       />
       
-      {/* Modals - Conditionally rendered based on activeModal */}
-      <LanguageModal
-        isOpen={activeModal === 'language'}
-        onClose={handleCloseModal}
-      />
-      
+      {/* Modals */}
       <ScheduleModal
         isOpen={activeModal === 'schedule'}
         onClose={handleCloseModal}
-        schedule={SCHEDULE}
+        schedule={CHANNELS.find(c => c.id === activeChannelId)?.programs || []}
         currentProgramId={currentProgramId}
       />
       

@@ -6,41 +6,129 @@ import {
   Volume2, VolumeX, Maximize, MoreHorizontal, Minimize, 
   Tv, Clock, ArrowRight, Eye, EyeOff, Repeat, Volume1, 
   Volume, AlertCircle, RefreshCw, Play, Loader2, Radio,
-  WifiOff, RotateCw, RotateCcw
+  WifiOff, Globe, X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { useMediaQuery } from '@/hooks/use-media-query'
-import { CurrentVideoData, VideoProgram } from '@/types/schedule'
+import { CurrentVideoData, VideoProgram, Channel } from '@/types/schedule'
 import { 
   formatTime, 
-  SCHEDULE, 
+  CHANNELS, 
   MASTER_EPOCH_START, 
   getTotalScheduleDuration,
-  getCurrentProgram
+  getChannelPrograms,
+  getSavedChannel,
+  saveChannel,
+  STORAGE_KEY
 } from '@/lib/schedule-utils'
 import { useYouTubePlayer, YT_STATE } from '@/hooks/use-youtube-player'
 
 interface SyncedVideoPlayerProps {
   onMenuOpen: () => void
-  onChannelSwitcherOpen: () => void
+  initialChannelId?: string
+  onChannelChange?: (channelId: string) => void
 }
 
-// API Response Types
-interface ApiResponse {
-  success: boolean
-  data: CurrentVideoData & {
-    nextProgramStartTime: number
-    scheduleVersion: string
-    totalPrograms: number
-    isLastInCycle: boolean
-  }
-  serverTimestamp: number
+// Channel Selector Modal Component
+const ChannelSelectorModal = ({ 
+  isOpen, 
+  onClose, 
+  channels, 
+  onSelectChannel, 
+  currentChannelId 
+}: { 
+  isOpen: boolean
+  onClose: () => void
+  channels: Channel[]
+  onSelectChannel: (channelId: string) => void
+  currentChannelId?: string
+}) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60]"
+          />
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.2 }}
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-zinc-900 rounded-xl shadow-2xl border border-zinc-800 z-[70] overflow-hidden"
+          >
+            <div className="flex items-center justify-between p-4 border-b border-zinc-800">
+              <h2 className="text-lg font-semibold text-white">Select Channel</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="text-white/60 hover:text-white hover:bg-white/10"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            
+            <div className="p-4 max-h-[60vh] overflow-y-auto">
+              <p className="text-white/60 text-sm mb-4">
+                Choose your preferred language and channel
+              </p>
+              <div className="space-y-2">
+                {channels.map((channel) => (
+                  <motion.button
+                    key={channel.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => {
+                      onSelectChannel(channel.id)
+                      onClose()
+                    }}
+                    className={`w-full flex items-center justify-between p-4 rounded-lg border transition-all ${
+                      channel.id === currentChannelId
+                        ? 'bg-primary/10 border-primary/30'
+                        : 'bg-zinc-800/50 border-zinc-700/50 hover:bg-zinc-800 hover:border-zinc-600'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{channel.icon}</span>
+                      <div className="text-left">
+                        <p className={`font-semibold ${
+                          channel.id === currentChannelId ? 'text-primary' : 'text-white'
+                        }`}>
+                          {channel.name}
+                        </p>
+                        <p className="text-xs text-white/40">
+                          {channel.language} • {channel.programs.length} programs
+                        </p>
+                      </div>
+                    </div>
+                    {channel.id === currentChannelId && (
+                      <span className="text-primary text-xs font-medium px-2 py-1 bg-primary/20 rounded-full">
+                        Current
+                      </span>
+                    )}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  )
 }
 
 // Start Screen Component
 const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
-  const isMobile = useMediaQuery('(max-width: 640px)')
+  const isMobile = useMediaQuery('(max-width: 768px)')
   
   return (
     <motion.div 
@@ -93,18 +181,18 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
 const LiveBadge = ({ variant = 'default', isMobile = false }: { variant?: 'default' | 'transparent', isMobile?: boolean }) => {
   if (variant === 'transparent') {
     return (
-      <div className={`flex items-center gap-1.5 ${isMobile ? 'px-1.5 py-0.5' : 'px-2 py-1'} bg-black/40 backdrop-blur-sm border border-white/20 rounded-full`}>
+      <div className={`flex items-center gap-1 ${isMobile ? 'px-1.5 py-0.5' : 'px-2 py-1'} bg-black/40 backdrop-blur-sm border border-white/20 rounded-full`}>
         <span className="relative flex h-2 w-2">
           <span className="animate-ping absolute bg-red-500 rounded-full"></span>
           <span className="relative bg-red-500 rounded-full h-2 w-2"></span>
         </span>
-        <span className={`text-white font-bold uppercase tracking-wider ${isMobile ? 'text-[8px]' : 'text-[10px] sm:text-xs'}`}>LIVE</span>
+        <span className={`text-white font-bold uppercase tracking-wider ${isMobile ? 'text-[8px]' : 'text-[10px]'}`}>LIVE</span>
       </div>
     )
   }
   
   return (
-    <div className={`flex items-center gap-2 bg-green-500/20 text-green-300 ${isMobile ? 'px-2 py-0.5 text-[10px]' : 'px-3 py-1 text-xs'} rounded-full border border-green-500/30`}>
+    <div className={`flex items-center gap-2 ${isMobile ? 'px-2 py-0.5 text-[10px]' : 'px-3 py-1 text-xs'} bg-green-500/20 text-green-300 rounded-full border border-green-500/30`}>
       <span className="relative flex h-2 w-2">
         <span className="animate-ping absolute bg-green-500 rounded-full"></span>
         <span className="relative bg-green-500 rounded-full h-2 w-2"></span>
@@ -114,12 +202,11 @@ const LiveBadge = ({ variant = 'default', isMobile = false }: { variant?: 'defau
   )
 }
 
-// Scrolling Upcoming Videos - Shows ALL upcoming items
-const ScrollingUpcomingVideos = ({ videos, currentIndex, isMobile, isFullscreen }: { 
+// Desktop Scrolling Upcoming Videos - Full layout
+const DesktopScrollingVideos = ({ videos, currentIndex, totalPrograms }: { 
   videos: VideoProgram[], 
   currentIndex: number,
-  isMobile: boolean,
-  isFullscreen: boolean 
+  totalPrograms: number 
 }) => {
   if (videos.length === 0) {
     return (
@@ -129,7 +216,7 @@ const ScrollingUpcomingVideos = ({ videos, currentIndex, isMobile, isFullscreen 
           transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           className="whitespace-nowrap"
         >
-          <span className={`text-primary font-semibold px-2 ${isMobile && isFullscreen ? 'text-[8px]' : 'text-[10px] sm:text-xs'}`}>
+          <span className="text-primary font-semibold px-3 text-xs">
             More content coming...
           </span>
         </motion.div>
@@ -137,17 +224,19 @@ const ScrollingUpcomingVideos = ({ videos, currentIndex, isMobile, isFullscreen 
     )
   }
 
-  // Create scrolling items with proper labels
   const items: string[] = []
-  const repeatCount = 4 // Repeat 4 times for continuous scroll
+  const repeatCount = 3
   
   for (let i = 0; i < repeatCount; i++) {
     videos.forEach((video, index) => {
-      const isFirstInNextCycle = index === 0 && currentIndex === SCHEDULE.length - 1
+      const isFirstInNextCycle = index === 0 && currentIndex === totalPrograms - 1
       const prefix = index === 0 ? 'NEXT' : 'UP NEXT'
       const duration = formatTime(video.duration)
       const wrapSymbol = isFirstInNextCycle ? '↻' : ''
-      items.push(`${prefix}: ${video.title} • ${duration} ${wrapSymbol}`)
+      
+      let item = `${prefix}: ${video.title} • ${duration}`
+      if (wrapSymbol) item += ` ${wrapSymbol}`
+      items.push(item)
     })
   }
 
@@ -155,11 +244,11 @@ const ScrollingUpcomingVideos = ({ videos, currentIndex, isMobile, isFullscreen 
     <div className="relative flex overflow-hidden h-full items-center">
       <motion.div
         className="flex whitespace-nowrap"
-        animate={{ x: [0, -3000] }}
-        transition={{ duration: 45, repeat: Infinity, ease: "linear" }}
+        animate={{ x: [0, -2000] }}
+        transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
       >
         {items.map((item, i) => (
-          <span key={i} className={`text-primary font-semibold px-3 sm:px-4 ${isMobile && isFullscreen ? 'text-[8px]' : 'text-[10px] sm:text-xs'}`}>
+          <span key={i} className="text-primary font-semibold px-4 text-xs">
             {item}
           </span>
         ))}
@@ -168,7 +257,66 @@ const ScrollingUpcomingVideos = ({ videos, currentIndex, isMobile, isFullscreen 
   )
 }
 
-export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedVideoPlayerProps) {
+// Mobile Scrolling Upcoming Videos - Compact layout
+const MobileScrollingVideos = ({ videos, currentIndex, totalPrograms }: { 
+  videos: VideoProgram[], 
+  currentIndex: number,
+  totalPrograms: number 
+}) => {
+  if (videos.length === 0) {
+    return (
+      <div className="relative flex overflow-hidden h-full items-center">
+        <motion.div 
+          animate={{ x: [0, -300] }} 
+          transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+          className="whitespace-nowrap"
+        >
+          <span className="text-primary font-semibold px-2 text-[8px]">
+            More content coming...
+          </span>
+        </motion.div>
+      </div>
+    )
+  }
+
+  const items: string[] = []
+  const repeatCount = 2
+  
+  for (let i = 0; i < repeatCount; i++) {
+    videos.slice(0, 5).forEach((video, index) => {
+      const isFirstInNextCycle = index === 0 && currentIndex === totalPrograms - 1
+      const prefix = index === 0 ? 'NEXT' : 'UP NEXT'
+      const duration = formatTime(video.duration)
+      const wrapSymbol = isFirstInNextCycle ? '↻' : ''
+      
+      let item = `${prefix}: ${video.title} • ${duration}`
+      if (wrapSymbol) item += ` ${wrapSymbol}`
+      items.push(item)
+    })
+  }
+
+  return (
+    <div className="relative flex overflow-hidden h-full items-center">
+      <motion.div
+        className="flex whitespace-nowrap"
+        animate={{ x: [0, -1200] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+      >
+        {items.map((item, i) => (
+          <span key={i} className="text-primary font-semibold px-2 text-[8px]">
+            {item}
+          </span>
+        ))}
+      </motion.div>
+    </div>
+  )
+}
+
+export function SyncedVideoPlayer({ 
+  onMenuOpen, 
+  initialChannelId = CHANNELS[0].id,
+  onChannelChange 
+}: SyncedVideoPlayerProps) {
   // UI State
   const [showControls, setShowControls] = useState(true)
   const [controlsVisible, setControlsVisible] = useState(true)
@@ -177,13 +325,26 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
   const [showVolumeTooltip, setShowVolumeTooltip] = useState(false)
   const [showTicker, setShowTicker] = useState(true)
   
+  // Channel State
+  const [channels] = useState<Channel[]>(CHANNELS)
+  const [currentChannelId, setCurrentChannelId] = useState<string>(() => {
+    // Use initialChannelId first, then try saved, then default
+    if (initialChannelId && CHANNELS.some(c => c.id === initialChannelId)) {
+      return initialChannelId
+    }
+    const saved = getSavedChannel()
+    return saved && CHANNELS.some(c => c.id === saved) ? saved : CHANNELS[0].id
+  })
+  const [showChannelSelector, setShowChannelSelector] = useState(false)
+  const [isFirstTime, setIsFirstTime] = useState(true)
+  
   // Player State
   const [currentProgram, setCurrentProgram] = useState<VideoProgram | null>(null)
   const [nextProgram, setNextProgram] = useState<VideoProgram | null>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [timeRemaining, setTimeRemaining] = useState('0:00')
   const [displayTime, setDisplayTime] = useState('0:00')
-  const [cycleInfo, setCycleInfo] = useState({ current: 1, total: SCHEDULE.length })
+  const [cycleInfo, setCycleInfo] = useState({ current: 1, total: 1 })
   const [upcomingVideos, setUpcomingVideos] = useState<VideoProgram[]>([])
   
   // App State
@@ -215,56 +376,60 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
     destroy
   } = useYouTubePlayer()
 
-  /**
-   * Update time display - runs every 100ms for smooth countdown
-   */
   const updateTimeDisplay = useCallback(() => {
-    if (!currentProgram) return
+    if (!currentProgram || !currentChannelId) return
     
-    // Calculate remaining time based on master epoch
     const now = Date.now() + serverTimeOffset
-    const totalDuration = getTotalScheduleDuration()
+    const programs = getChannelPrograms(currentChannelId)
+    if (programs.length === 0) return
+    
+    const totalDuration = programs.reduce((sum, p) => sum + p.duration, 0)
     
     const elapsedSinceEpoch = Math.floor((now - masterEpochRef.current) / 1000)
     const cyclePosition = elapsedSinceEpoch % totalDuration
     
     let accumulatedTime = 0
     let foundTime = 0
+    let foundIndex = 0
     
-    for (let i = 0; i < SCHEDULE.length; i++) {
-      const program = SCHEDULE[i]
+    for (let i = 0; i < programs.length; i++) {
+      const program = programs[i]
       if (cyclePosition >= accumulatedTime && cyclePosition < accumulatedTime + program.duration) {
         foundTime = cyclePosition - accumulatedTime
+        foundIndex = i
         break
       }
       accumulatedTime += program.duration
     }
     
-    // Update current time
     setCurrentTime(foundTime)
     setDisplayTime(formatTime(foundTime))
     
-    // Update time remaining
     if (currentProgram) {
       const remaining = Math.max(0, currentProgram.duration - foundTime)
       setTimeRemaining(formatTime(remaining))
     }
-  }, [currentProgram, serverTimeOffset])
+    
+    if (foundIndex + 1 !== cycleInfo.current) {
+      setCycleInfo({ current: foundIndex + 1, total: programs.length })
+    }
+  }, [currentProgram, currentChannelId, serverTimeOffset, cycleInfo.current])
 
-  /**
-   * 1️⃣ API CALL ONLY AFTER ICON CLICK
-   */
-  const fetchAndStartVideo = useCallback(async () => {
+  const loadChannel = useCallback(async (channelId: string) => {
     if (isLoading) return
     
     setIsLoading(true)
     setApiError(null)
+    setCurrentChannelId(channelId)
+    onChannelChange?.(channelId)
+    
+    saveChannel(channelId)
     
     try {
-      console.log('🎬 Icon clicked - calling API...')
+      console.log('🎬 Loading channel:', channelId)
       
       const clientTime = Date.now()
-      const response = await fetch('/api/current-video', {
+      const response = await fetch(`/api/current-video?channel=${channelId}`, {
         headers: { 
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache'
@@ -280,8 +445,6 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
       if (!result.success || !result.data) {
         throw new Error('Invalid API response')
       }
-      
-      console.log('✅ API response received:', result.data)
       
       const offset = result.serverTimestamp - clientTime
       setServerTimeOffset(offset)
@@ -303,60 +466,84 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
         total: result.data.totalPrograms 
       })
       
-      // Set upcoming videos (next 15 programs for continuous scroll)
+      const programs = getChannelPrograms(channelId)
       const upcoming: VideoProgram[] = []
       for (let i = 1; i <= 15; i++) {
-        const nextIndex = (result.data.programIndex + i) % SCHEDULE.length
-        upcoming.push(SCHEDULE[nextIndex])
+        const nextIndex = (result.data.programIndex + i) % programs.length
+        upcoming.push(programs[nextIndex])
       }
       setUpcomingVideos(upcoming)
       
       lastVideoIdRef.current = program.videoId
       
-      await initializePlayer({
-        videoId: program.videoId,
-        startSeconds: Math.floor(startTime),
-        volume: volume,
-        muted: false,
-        onReady: () => {
-          console.log('✅ Player ready - starting playback')
-          setPlayerReady(true)
-          setIsLoading(false)
-          setShowStartScreen(false)
-          
-          seekTo(startTime, true)
-          play()
-          
-          setYouTubeVolume(volume)
-          setYouTubeMuted(false)
-        },
-        onStateChange: (state) => {
-          if (!mountedRef.current) return
-          
-          if (state === YT_STATE.ENDED) {
-            console.log('📺 Video ended - playing next')
-            playNextVideo()
+      if (playerReady) {
+        console.log('🔄 Loading new video in existing player')
+        loadVideo(program.videoId, Math.floor(startTime))
+        seekTo(startTime, true)
+        play()
+        setIsLoading(false)
+      } else {
+        await initializePlayer({
+          videoId: program.videoId,
+          startSeconds: Math.floor(startTime),
+          volume: volume,
+          muted: false,
+          onReady: () => {
+            console.log('✅ Player ready - starting playback')
+            setPlayerReady(true)
+            setIsLoading(false)
+            setShowStartScreen(false)
+            setIsFirstTime(false)
+            
+            seekTo(startTime, true)
+            play()
+            
+            setYouTubeVolume(volume)
+            setYouTubeMuted(false)
+          },
+          onStateChange: (state) => {
+            if (!mountedRef.current) return
+            
+            if (state === YT_STATE.ENDED) {
+              console.log('📺 Video ended - playing next')
+              playNextVideo()
+            }
+          },
+          onError: (code, msg) => {
+            console.error('Player error:', code, msg)
+            if (code === 2 || code === 5 || code === 100) {
+              setApiError(`Playback error: ${msg}`)
+              setIsLoading(false)
+            } else {
+              console.log('⚠️ Non-critical error, continuing playback')
+              setIsLoading(false)
+            }
           }
-        },
-        onError: (code, msg) => {
-          console.error('Player error:', code, msg)
-          setApiError(`Playback error: ${msg}`)
-          setIsLoading(false)
-        }
-      })
+        })
+      }
       
     } catch (error) {
       console.error('API call failed:', error)
       setApiError(error instanceof Error ? error.message : 'Failed to load video')
       setIsLoading(false)
     }
-  }, [isLoading, volume, initializePlayer, seekTo, play, setYouTubeVolume, setYouTubeMuted])
+  }, [isLoading, playerReady, volume, initializePlayer, loadVideo, seekTo, play, setYouTubeVolume, setYouTubeMuted, onChannelChange])
 
-  /**
-   * 2️⃣ Play next video in sequence
-   */
+  const handleFirstTimeStart = useCallback(() => {
+    setShowChannelSelector(true)
+  }, [])
+
+  const handleSelectChannel = useCallback((channelId: string) => {
+    setShowChannelSelector(false)
+    loadChannel(channelId)
+  }, [loadChannel])
+
+  const handleOpenChannelSelector = useCallback(() => {
+    setShowChannelSelector(true)
+  }, [])
+
   const playNextVideo = useCallback(async () => {
-    if (!currentProgram || !nextProgram) return
+    if (!currentProgram || !nextProgram || !currentChannelId) return
     
     console.log('▶️ Playing next video:', nextProgram.title)
     
@@ -366,9 +553,10 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
     setCurrentTime(startTime)
     setDisplayTime(formatTime(startTime))
     
-    const currentIndex = SCHEDULE.findIndex(p => p.id === nextProgram.id)
-    const nextNextIndex = (currentIndex + 1) % SCHEDULE.length
-    const nextNextProgram = SCHEDULE[nextNextIndex]
+    const programs = getChannelPrograms(currentChannelId)
+    const currentIndex = programs.findIndex(p => p.id === nextProgram.id)
+    const nextNextIndex = (currentIndex + 1) % programs.length
+    const nextNextProgram = programs[nextNextIndex]
     setNextProgram(nextNextProgram)
     
     setCycleInfo(prev => ({ 
@@ -376,10 +564,9 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
       total: prev.total 
     }))
     
-    // Update upcoming videos
     const upcoming: VideoProgram[] = []
     for (let i = 1; i <= 15; i++) {
-      upcoming.push(SCHEDULE[(currentIndex + i) % SCHEDULE.length])
+      upcoming.push(programs[(currentIndex + i) % programs.length])
     }
     setUpcomingVideos(upcoming)
     
@@ -389,18 +576,15 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
     setYouTubeVolume(volume)
     setYouTubeMuted(isMuted)
     
-  }, [currentProgram, nextProgram, loadVideo, volume, isMuted, setYouTubeVolume, setYouTubeMuted])
+  }, [currentProgram, nextProgram, currentChannelId, loadVideo, volume, isMuted, setYouTubeVolume, setYouTubeMuted])
 
-  /**
-   * 3️⃣ SYNC API CALL EVERY 5 MINUTES
-   */
   const syncWithServer = useCallback(async () => {
-    if (!playerReady || !mountedRef.current) return
+    if (!playerReady || !mountedRef.current || !currentChannelId) return
     
     try {
       console.log('🔄 Syncing with server (5-minute interval)...')
       
-      const response = await fetch('/api/current-video', {
+      const response = await fetch(`/api/current-video?channel=${currentChannelId}`, {
         headers: { 'Cache-Control': 'no-cache' }
       })
       
@@ -426,11 +610,11 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
           total: result.data.totalPrograms 
         })
         
-        // Update upcoming videos
+        const programs = getChannelPrograms(currentChannelId)
         const upcoming: VideoProgram[] = []
         for (let i = 1; i <= 15; i++) {
-          const nextIndex = (result.data.programIndex + i) % SCHEDULE.length
-          upcoming.push(SCHEDULE[nextIndex])
+          const nextIndex = (result.data.programIndex + i) % programs.length
+          upcoming.push(programs[nextIndex])
         }
         setUpcomingVideos(upcoming)
         
@@ -445,17 +629,16 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
     } catch (error) {
       console.error('Sync failed:', error)
     }
-  }, [playerReady, currentProgram, loadVideo, seekTo])
+  }, [playerReady, currentChannelId, currentProgram, loadVideo, seekTo])
 
-  /**
-   * Handle reload/refresh
-   */
   const handleReload = useCallback(() => {
     console.log('🔄 Reloading...')
     setShowStartScreen(true)
     setPlayerReady(false)
     setCurrentProgram(null)
+    setCurrentChannelId('')
     setApiError(null)
+    setIsFirstTime(true)
     destroy()
     
     setTimeout(() => {
@@ -463,9 +646,6 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
     }, 100)
   }, [destroy])
 
-  /**
-   * Set up time update interval - runs every 100ms for smooth countdown
-   */
   useEffect(() => {
     if (!playerReady || !currentProgram) return
     
@@ -480,9 +660,6 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
     }
   }, [playerReady, currentProgram, updateTimeDisplay])
 
-  /**
-   * Set up 5-minute sync interval
-   */
   useEffect(() => {
     if (!playerReady) return
     
@@ -492,7 +669,7 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
     
     syncIntervalRef.current = setInterval(() => {
       syncWithServer()
-    }, 300000) // 5 minutes
+    }, 300000)
     
     return () => {
       if (syncIntervalRef.current) {
@@ -501,9 +678,13 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
     }
   }, [playerReady, syncWithServer])
 
-  /**
-   * Cleanup on unmount
-   */
+  useEffect(() => {
+    const savedChannel = getSavedChannel()
+    if (savedChannel && savedChannel !== currentChannelId) {
+      loadChannel(savedChannel)
+    }
+  }, [])
+
   useEffect(() => {
     mountedRef.current = true
     
@@ -519,9 +700,6 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
     }
   }, [destroy])
 
-  /**
-   * Volume handlers
-   */
   const handleVolumeChange = useCallback((value: number[]) => {
     const newVolume = value[0]
     setVolume(newVolume)
@@ -541,7 +719,6 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
     if (!newMuted) setYouTubeVolume(volume)
   }, [isMuted, setYouTubeMuted, setYouTubeVolume, volume])
 
-  // Activity handlers for controls
   const handleActivity = useCallback(() => {
     setControlsVisible(true)
     setShowControls(true)
@@ -571,7 +748,7 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
     return <Volume2 className={isMobile ? 'h-3 w-3' : 'h-4 w-4'} />
   }
 
-  const isLastInCycle = currentProgram ? cycleInfo.current === SCHEDULE.length : false
+  const isLastInCycle = currentProgram && cycleInfo.total ? cycleInfo.current === cycleInfo.total : false
 
   return (
     <div className="relative flex items-center justify-center bg-zinc-950 min-h-screen w-full overflow-hidden">
@@ -585,16 +762,16 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
           <div className="absolute inset-0 w-full h-full pointer-events-auto" />
           
           {/* START SCREEN */}
-          {showStartScreen && !isLoading && (
-            <StartScreen onPlayClick={fetchAndStartVideo} />
+          {showStartScreen && !isLoading && !apiError && (
+            <StartScreen onPlayClick={handleFirstTimeStart} />
           )}
           
           {/* Loading overlay */}
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-40">
               <div className="text-center">
-                <Loader2 className="h-16 w-16 text-primary animate-spin mx-auto mb-4" />
-                <p className="text-white text-lg">Loading your broadcast...</p>
+                <Loader2 className={`${isMobile ? 'h-12 w-12' : 'h-16 w-16'} text-primary animate-spin mx-auto mb-4`} />
+                <p className={`text-white ${isMobile ? 'text-base' : 'text-lg'}`}>Loading your broadcast...</p>
                 <p className="text-white/60 text-sm mt-2">Fetching latest schedule</p>
               </div>
             </div>
@@ -607,94 +784,144 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
                 <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
                 <p className="text-white text-lg mb-2">Failed to Load</p>
                 <p className="text-white/60 text-sm mb-6">{apiError}</p>
-                <Button onClick={handleReload} className="bg-primary hover:bg-primary/90 text-white">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Try Again
-                </Button>
+                <div className="flex gap-3 justify-center">
+                  <Button onClick={handleReload} className="bg-primary hover:bg-primary/90 text-white">
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Try Again
+                  </Button>
+                  <Button onClick={handleOpenChannelSelector} variant="outline" className="border-white/20 text-white hover:bg-white/10">
+                    Change Channel
+                  </Button>
+                </div>
               </div>
             </div>
           )}
 
-          {/* Player UI - Shows after successful API call */}
+          {/* Player UI */}
           {!showStartScreen && !isLoading && !apiError && playerReady && currentProgram && (
             <>
-              {/* TOP-RIGHT LIVE BADGE */}
-              <div className={`absolute ${isMobile ? 'top-2 right-2' : 'top-4 right-4'} z-40`}>
-                <LiveBadge isMobile={isMobile} />
-              </div>
-
-              {/* TIME REMAINING - Shows live countdown */}
-              {timeRemaining && (
-                <div className={`absolute ${isMobile ? 'top-2 left-2' : 'top-4 left-4'} z-40`}>
-                  <div className="flex items-center gap-1 bg-zinc-900/80 text-white px-2 py-1 rounded-full text-xs border border-white/10 backdrop-blur-sm">
-                    <Clock className={`${isMobile ? 'h-2 w-2' : 'h-3 w-3'} text-primary`} />
-                    <span className={isMobile ? 'text-[10px]' : 'text-xs'}>Next in {timeRemaining}</span>
-                  </div>
-                </div>
-              )}
-
-              {/* BOTTOM TICKER - Shows all items with live countdown */}
-              {showTicker && (
-                <div className="absolute bottom-0 left-0 right-0 z-30">
-                  <div className={`relative overflow-hidden bg-gradient-to-r from-zinc-900/95 via-zinc-900/90 to-zinc-900/95 backdrop-blur-lg border-t border-white/10 ${
-                    isMobile ? 'h-16' : 'h-16'
-                  }`}>
-                    <div className="relative h-full flex items-center px-2 sm:px-4">
-                      {/* Left section with current program info */}
-                      <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                        <LiveBadge variant="transparent" isMobile={isMobile} />
-                        
-                        {/* Program title and category - visible on desktop */}
-                        {!isMobile && (
-                          <div className="flex flex-col min-w-[200px] max-w-[300px]">
-                            <p className="text-white font-bold text-xs sm:text-sm line-clamp-1">
-                              {currentProgram.title}
-                            </p>
-                            <p className="text-white/60 text-[10px] sm:text-xs">
-                              {currentProgram.category || 'Program'} • {cycleInfo.current}/{cycleInfo.total}
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Current time / duration - ALWAYS VISIBLE with live countdown */}
-                        <div className={`flex items-center gap-1 px-2 py-1 bg-white/10 rounded-full ${isMobile ? 'text-[10px]' : 'text-xs'}`}>
-                          <Clock className={`${isMobile ? 'h-3 w-3' : 'h-3 w-3'} text-primary`} />
-                          <span className="text-white font-semibold whitespace-nowrap">
-                            {displayTime} / {formatTime(currentProgram.duration)}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Separator */}
-                      <div className="h-6 sm:h-8 w-px bg-white/20 mx-2 sm:mx-3 flex-shrink-0" />
-
-                      {/* Scrolling upcoming videos - SHOWS ALL ITEMS */}
-                      <div className="flex-1 min-w-0 overflow-hidden">
-                        <ScrollingUpcomingVideos 
-                          videos={upcomingVideos} 
-                          currentIndex={cycleInfo.current - 1}
-                          isMobile={isMobile}
-                          isFullscreen={false}
-                        />
-                      </div>
-
-                      {/* Next program badge - desktop only */}
-                      {nextProgram && !isMobile && (
-                        <div className="hidden lg:flex items-center gap-2 px-3 flex-shrink-0">
-                          <ArrowRight className="text-primary animate-pulse h-3 w-3" />
-                          <div className="flex flex-col">
-                            <p className="text-white/60 uppercase tracking-wider text-[10px] font-semibold">
-                              Up Next
-                            </p>
-                            <p className="text-white font-semibold text-xs line-clamp-1 max-w-[200px]">
-                              {nextProgram.title}
-                              {isLastInCycle && <span className="text-primary ml-1">↻</span>}
-                            </p>
-                          </div>
-                        </div>
-                      )}
+              {/* TOP SECTION - Different for desktop vs mobile */}
+              {!isMobile ? (
+                // DESKTOP TOP SECTION - Full layout
+                <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/80 via-black/40 to-transparent pt-6 pb-12 px-6">
+                  <div className="flex items-center gap-4">
+                    <LiveBadge isMobile={false} />
+                    <div className="flex-1">
+                      <h2 className="text-white font-bold text-lg sm:text-xl line-clamp-1">
+                        {currentProgram.title}
+                      </h2>
+                      <p className="text-white/60 text-xs sm:text-sm mt-1">
+                        {currentProgram.category || 'Program'} • {cycleInfo.current}/{cycleInfo.total} • {
+                          channels.find(c => c.id === currentChannelId)?.name
+                        }
+                      </p>
                     </div>
                   </div>
+                </div>
+              ) : (
+                // MOBILE TOP SECTION - Only shown when player is open
+                showControls && (
+                  <div className="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-black/80 via-black/40 to-transparent pt-3 pb-6 px-2">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-2">
+                        <LiveBadge isMobile={true} />
+                        <span className="text-white/60 text-[8px]">
+                          {cycleInfo.current}/{cycleInfo.total} • {channels.find(c => c.id === currentChannelId)?.name}
+                        </span>
+                      </div>
+                      <h2 className="text-white font-bold text-xs line-clamp-1">
+                        {currentProgram.title}
+                      </h2>
+                      <p className="text-white/60 text-[8px]">
+                        {currentProgram.category || 'Program'}
+                      </p>
+                    </div>
+                  </div>
+                )
+              )}
+
+              {/* BOTTOM TICKER - Different for desktop vs mobile */}
+              {showTicker && (
+                <div className="absolute bottom-0 left-0 right-0 z-30">
+                  {!isMobile ? (
+                    // DESKTOP TICKER - Full layout
+                    <div className="relative overflow-hidden bg-gradient-to-r from-zinc-900/95 via-zinc-900/90 to-zinc-900/95 backdrop-blur-lg border-t border-white/10 h-16">
+                      <div className="relative h-full flex items-center px-6">
+                        <div className="flex items-center gap-4 flex-shrink-0">
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 rounded-full text-xs">
+                            <Clock className="h-3 w-3 text-primary" />
+                            <span className="text-white font-semibold whitespace-nowrap">
+                              {displayTime} / {formatTime(currentProgram.duration)}
+                            </span>
+                          </div>
+                          
+                          {timeRemaining && (
+                            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/20 rounded-full border border-primary/30 text-xs">
+                              <ArrowRight className="h-3 w-3 text-primary" />
+                              <span className="text-primary font-semibold whitespace-nowrap">
+                                Next in {timeRemaining}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="h-8 w-px bg-white/20 mx-4 flex-shrink-0" />
+
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <DesktopScrollingVideos 
+                            videos={upcomingVideos} 
+                            currentIndex={cycleInfo.current - 1}
+                            totalPrograms={cycleInfo.total}
+                          />
+                        </div>
+
+                        {nextProgram && (
+                          <div className="hidden lg:flex items-center gap-3 px-4 flex-shrink-0">
+                            <div className="flex flex-col">
+                              <p className="text-white/60 uppercase tracking-wider text-[10px] font-semibold">
+                                Up Next
+                              </p>
+                              <p className="text-white font-semibold text-xs line-clamp-1 max-w-[200px]">
+                                {nextProgram.title}
+                                {isLastInCycle && <span className="text-primary ml-1">↻</span>}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    // MOBILE TICKER - Compact layout (always visible)
+                    <div className="relative overflow-hidden bg-gradient-to-r from-zinc-900/95 via-zinc-900/90 to-zinc-900/95 backdrop-blur-lg border-t border-white/10 h-12">
+                      <div className="relative h-full flex items-center px-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-1 px-2 py-1 bg-white/10 rounded-full">
+                            <Clock className="h-2.5 w-2.5 text-primary" />
+                            <span className="text-white font-semibold text-[9px] whitespace-nowrap">
+                              {displayTime}
+                            </span>
+                          </div>
+                          
+                          {timeRemaining && (
+                            <div className="flex items-center gap-1 px-2 py-1 bg-primary/20 rounded-full border border-primary/30">
+                              <ArrowRight className="h-2.5 w-2.5 text-primary" />
+                              <span className="text-primary font-semibold text-[9px] whitespace-nowrap">
+                                {timeRemaining}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0 overflow-hidden ml-2">
+                          <MobileScrollingVideos 
+                            videos={upcomingVideos} 
+                            currentIndex={cycleInfo.current - 1}
+                            totalPrograms={cycleInfo.total}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -706,15 +933,17 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 50 }}
                     transition={{ duration: 0.2 }}
-                    className={`absolute ${showTicker ? 'bottom-16' : 'bottom-0'} left-0 right-0 z-50`}
+                    className={`absolute ${showTicker ? (isMobile ? 'bottom-12' : 'bottom-16') : 'bottom-0'} left-0 right-0 z-50`}
                   >
-                    <div className="bg-gradient-to-t from-zinc-900 via-zinc-900/95 to-transparent pt-4 sm:pt-8">
-                      <div className="bg-zinc-900/90 backdrop-blur-md border-t border-zinc-700/50 px-2 sm:px-4 py-2 sm:py-3">
-                        <div className="flex items-center justify-between gap-2 sm:gap-4">
+                    <div className="bg-gradient-to-t from-zinc-900 via-zinc-900/95 to-transparent pt-4">
+                      <div className={`bg-zinc-900/90 backdrop-blur-md border-t border-zinc-700/50 ${
+                        isMobile ? 'px-3 py-2' : 'px-6 py-3'
+                      }`}>
+                        <div className="flex items-center justify-between gap-2">
                           {/* Volume */}
-                          <div className={`flex items-center gap-1 sm:gap-3 flex-1 ${isMobile ? 'max-w-[100px]' : 'max-w-xs'}`}>
+                          <div className={`flex items-center gap-2 flex-1 ${isMobile ? 'max-w-[90px]' : 'max-w-xs'}`}>
                             <Button variant="ghost" size="icon" onClick={toggleMute} 
-                              className={`text-white hover:bg-white/10 ${isMobile ? 'h-6 w-6' : 'h-8 w-8 sm:h-10 sm:w-10'}`}>
+                              className={`text-white hover:bg-white/10 ${isMobile ? 'h-7 w-7' : 'h-8 w-8'}`}>
                               {getVolumeIcon()}
                             </Button>
                             <div className="flex-1 relative">
@@ -722,7 +951,7 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
                                 <motion.div 
                                   initial={{ opacity: 0, y: 10 }}
                                   animate={{ opacity: 1, y: 0 }}
-                                  className={`absolute -top-8 left-1/2 -translate-x-1/2 bg-zinc-800 text-white ${isMobile ? 'text-[10px] px-1 py-0.5' : 'text-xs px-2 py-1'} rounded`}>
+                                  className={`absolute -top-8 left-1/2 -translate-x-1/2 bg-zinc-800 text-white ${isMobile ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1'} rounded shadow-lg`}>
                                   {volume}%
                                 </motion.div>
                               )}
@@ -731,23 +960,26 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
                           </div>
 
                           {/* Actions */}
-                          <div className="flex items-center gap-1 sm:gap-2">
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" onClick={handleOpenChannelSelector}
+                              className={`text-white hover:bg-white/10 ${isMobile ? 'h-7 w-7' : 'h-8 w-8'}`}
+                              title="Change Channel">
+                              <Globe className={isMobile ? 'h-3 w-3' : 'h-4 w-4'} />
+                            </Button>
+                            
                             <Button variant="ghost" size="icon" onClick={() => setShowTicker(!showTicker)} 
-                              className={`text-white hover:bg-white/10 ${isMobile ? 'h-6 w-6' : 'h-8 w-8 sm:h-10 sm:w-10'}`}>
+                              className={`text-white hover:bg-white/10 ${isMobile ? 'h-7 w-7' : 'h-8 w-8'}`}>
                               {showTicker ? <EyeOff className={isMobile ? 'h-3 w-3' : 'h-4 w-4'} /> : <Eye className={isMobile ? 'h-3 w-3' : 'h-4 w-4'} />}
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={onChannelSwitcherOpen} 
-                              className={`text-white hover:bg-white/10 ${isMobile ? 'h-6 w-6' : 'h-8 w-8 sm:h-10 sm:w-10'}`}>
-                              <Tv className={isMobile ? 'h-3 w-3' : 'h-4 w-4'} />
-                            </Button>
-                            {/* Reload Button */}
+                            
                             <Button variant="ghost" size="icon" onClick={handleReload} 
-                              className={`text-white hover:bg-white/10 ${isMobile ? 'h-6 w-6' : 'h-8 w-8 sm:h-10 sm:w-10'}`}
+                              className={`text-white hover:bg-white/10 ${isMobile ? 'h-7 w-7' : 'h-8 w-8'}`}
                               title="Reload Player">
                               <RefreshCw className={isMobile ? 'h-3 w-3' : 'h-4 w-4'} />
                             </Button>
+                            
                             <Button variant="ghost" size="icon" onClick={onMenuOpen} 
-                              className={`text-white hover:bg-white/10 ${isMobile ? 'h-6 w-6' : 'h-8 w-8 sm:h-10 sm:w-10'}`}>
+                              className={`text-white hover:bg-white/10 ${isMobile ? 'h-7 w-7' : 'h-8 w-8'}`}>
                               <MoreHorizontal className={isMobile ? 'h-3 w-3' : 'h-4 w-4'} />
                             </Button>
                           </div>
@@ -761,32 +993,29 @@ export function SyncedVideoPlayer({ onMenuOpen, onChannelSwitcherOpen }: SyncedV
           )}
         </div>
 
-        {/* Windowed mode content - Program details below video */}
-        {!showStartScreen && !isLoading && !apiError && playerReady && currentProgram && (
-          <div className="bg-zinc-900/90 border-b border-zinc-700/50 rounded-b-lg px-4 py-3">
-            <h3 className={`text-white font-semibold line-clamp-2 ${isMobile ? 'text-base' : 'text-lg'}`}>
+        {/* Windowed mode content - Different for desktop vs mobile */}
+        {!showStartScreen && !isLoading && !apiError && playerReady && currentProgram && !isMobile && (
+          <div className="bg-zinc-900/90 border-b border-zinc-700/50 rounded-b-lg px-6 py-4">
+            <h3 className="text-white font-semibold text-lg line-clamp-2">
               {currentProgram.title}
             </h3>
             {currentProgram.description && (
-              <p className={`text-white/60 mt-1 line-clamp-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
+              <p className="text-white/60 text-sm mt-1 line-clamp-2">
                 {currentProgram.description}
               </p>
             )}
-            {/* <div className={`flex items-center gap-4 mt-2 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-              <div className="flex items-center gap-2">
-                <Clock className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} text-primary`} />
-                <span className="text-white font-semibold">{displayTime} / {formatTime(currentProgram.duration)}</span>
-              </div>
-              {timeRemaining && (
-                <div className="flex items-center gap-2">
-                  <ArrowRight className={`${isMobile ? 'h-3 w-3' : 'h-4 w-4'} text-primary`} />
-                  <span className="text-white/80">Next in {timeRemaining}</span>
-                </div>
-              )}
-            </div> */}
           </div>
         )}
       </div>
+
+      {/* Channel Selector Modal */}
+      <ChannelSelectorModal
+        isOpen={showChannelSelector}
+        onClose={() => setShowChannelSelector(false)}
+        channels={channels}
+        onSelectChannel={handleSelectChannel}
+        currentChannelId={currentChannelId}
+      />
     </div>
   )
 }
