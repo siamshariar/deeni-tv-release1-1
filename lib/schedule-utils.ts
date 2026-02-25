@@ -1,6 +1,6 @@
 import { VideoProgram, CurrentVideoData, Channel } from '@/types/schedule'
 
-// Bengali Channel - Dr. Abdullah Jahangir videos (confirmed working)
+// Bengali Channel - Dr. Abdullah Jahangir videos
 const BENGALI_VIDEOS: VideoProgram[] = [
   {
     id: 'b1',
@@ -50,7 +50,7 @@ const BENGALI_VIDEOS: VideoProgram[] = [
     id: 'b5',
     videoId: 'wX1AEPleTHw',
     title: 'Siyam Sunnah & Rules – রোজার নিয়ত ও সুন্নত',
-    description: 'রোজার নিয়ত ও সুন্নত সম্পর্কে ড. আব্দুল্লাহ জাহাঙ্গীর এর আলোচনা',
+    description: 'রোজার নিয়ত ও সুন্নত সম্পর্কে ড. আব্দুল্লাহ জাঙ্গীর এর আলোচনা',
     duration: 1200,
     category: 'Lecture',
     language: 'Bengali',
@@ -59,7 +59,7 @@ const BENGALI_VIDEOS: VideoProgram[] = [
   }
 ]
 
-// English Channel - Verified Ramadan Education & Q&A Videos
+// English Channel - Ramadan videos
 const ENGLISH_VIDEOS: VideoProgram[] = [
   {
     id: 'e1',
@@ -76,7 +76,7 @@ const ENGLISH_VIDEOS: VideoProgram[] = [
     id: 'e2',
     videoId: 'jNMXHNinAYE',
     title: 'Special Ramadan 2026 Q&A',
-    description: 'Answers to common Ramadan questions (work-life balance, Qur\'an, fasting, etc.).',
+    description: 'Answers to common Ramadan questions (work-life balance, Qur\'an, fasting).',
     duration: 2700,
     category: 'Q&A',
     language: 'English',
@@ -118,13 +118,13 @@ const ENGLISH_VIDEOS: VideoProgram[] = [
   }
 ]
 
-// Arabic Channel - Verified Ramadan Education & Q&A Videos
+// Arabic Channel - Ramadan videos
 const ARABIC_VIDEOS: VideoProgram[] = [
   {
     id: 'a1',
     videoId: 'uWA_K1gWws8',
     title: 'اسئلة واجوبة في الصوم والإفطار – الشيخ صالح الفوزان',
-    description: 'شرح كبير بأسلوب الأسئلة والأجوبة حول أحكام الصيام.',
+    description: 'شرح كبير بأسلوب الأسئلة والأجوبة حول أحكام الصيام',
     duration: 5400,
     category: 'Q&A',
     language: 'Arabic',
@@ -134,8 +134,8 @@ const ARABIC_VIDEOS: VideoProgram[] = [
   {
     id: 'a2',
     videoId: 'vAP3XMgOpEU',
-    title: 'Iftar Etiquette & Major Nullifiers of Fasting – Dr. Salih al Fawzan',
-    description: 'يغطي الفقه الهام لصوم رمضان.',
+    title: 'Iftar Etiquette & Major Nullifiers of Fasting',
+    description: 'يغطي الفقه الهام لصوم رمضان',
     duration: 4200,
     category: 'Lecture',
     language: 'Arabic',
@@ -146,7 +146,7 @@ const ARABIC_VIDEOS: VideoProgram[] = [
     id: 'a3',
     videoId: 'Iu2af50jiow',
     title: 'أسئلة دينية عن شهر رمضان – 50 سؤال وجواب',
-    description: 'أسئلة وأجوبة تعليمية على شكل اختبار باللغة العربية.',
+    description: 'أسئلة وأجوبة تعليمية على شكل اختبار باللغة العربية',
     duration: 7200,
     category: 'Q&A',
     language: 'Arabic',
@@ -157,7 +157,7 @@ const ARABIC_VIDEOS: VideoProgram[] = [
     id: 'a4',
     videoId: 'QdmoSCQEH-o',
     title: '30 سؤال وجواب عن الصيام – Ramadan Knowledge',
-    description: 'أسئلة تعليمية عن صيام رمضان.',
+    description: 'أسئلة تعليمية عن صيام رمضان',
     duration: 2400,
     category: 'Q&A',
     language: 'Arabic',
@@ -168,7 +168,7 @@ const ARABIC_VIDEOS: VideoProgram[] = [
     id: 'a5',
     videoId: '5lFSrPoqkMw',
     title: 'اسئلة دينية صعبة جداً عن شهر رمضان',
-    description: 'أسئلة وأجوبة إسلامية عميقة عن رمضان.',
+    description: 'أسئلة وأجوبة إسلامية عميقة عن رمضان',
     duration: 6300,
     category: 'Q&A',
     language: 'Arabic',
@@ -202,7 +202,7 @@ export const CHANNELS: Channel[] = [
   }
 ]
 
-// Export SCHEDULE for backward compatibility (uses Bengali channel programs)
+// Export SCHEDULE for backward compatibility
 export const SCHEDULE: VideoProgram[] = BENGALI_VIDEOS
 
 // Types for scheduled preloads
@@ -227,6 +227,9 @@ export const SCHEDULE_VERSION = '1.1.0'
 // Local storage key
 export const STORAGE_KEY = 'deeni-tv-channel'
 
+// Previous videos storage key
+export const PREVIOUS_VIDEOS_KEY = 'deeni-tv-previous'
+
 // Get saved channel from localStorage
 export function getSavedChannel(): string | null {
   if (typeof window === 'undefined') return null
@@ -246,6 +249,52 @@ export function saveChannel(channelId: string): void {
   } catch (error) {
     console.error('Error saving to localStorage:', error)
   }
+}
+
+// Get previous videos from localStorage
+export function getPreviousVideos(): VideoProgram[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const saved = localStorage.getItem(PREVIOUS_VIDEOS_KEY)
+    return saved ? JSON.parse(saved) : []
+  } catch (error) {
+    console.error('Error reading previous videos:', error)
+    return []
+  }
+}
+
+// Save previous videos to localStorage
+export function savePreviousVideos(videos: VideoProgram[]): void {
+  if (typeof window === 'undefined') return
+  try {
+    // Keep only last 30 videos
+    const recentVideos = videos.slice(0, 30)
+    localStorage.setItem(PREVIOUS_VIDEOS_KEY, JSON.stringify(recentVideos))
+  } catch (error) {
+    console.error('Error saving previous videos:', error)
+  }
+}
+
+// Add video to previous list
+export function addToPreviousVideos(video: VideoProgram): VideoProgram[] {
+  const previous = getPreviousVideos()
+  
+  // Add watched timestamp
+  const watchedVideo = {
+    ...video,
+    watchedAt: Date.now()
+  }
+  
+  // Remove if already exists
+  const filtered = previous.filter(v => v.id !== video.id)
+  
+  // Add to beginning
+  const updated = [watchedVideo, ...filtered].slice(0, 30)
+  
+  // Save to localStorage
+  savePreviousVideos(updated)
+  
+  return updated
 }
 
 // Get channel programs
@@ -358,10 +407,11 @@ export function getUpcomingPrograms(channelId: string, count: number = 15): Upco
 }
 
 /**
- * Check for scheduled preloads
+ * Get previous programs (from localStorage)
  */
-export function checkScheduledPreloads(): ScheduledPreload[] {
-  return []
+export function getPreviousPrograms(count: number = 15): VideoProgram[] {
+  const previous = getPreviousVideos()
+  return previous.slice(0, count)
 }
 
 /**

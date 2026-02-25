@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getCurrentProgram, CHANNELS, SCHEDULE_VERSION, MASTER_EPOCH_START } from '@/lib/schedule-utils'
+import { getCurrentProgram, getPreviousPrograms, getUpcomingPrograms, CHANNELS, SCHEDULE_VERSION, MASTER_EPOCH_START } from '@/lib/schedule-utils'
 
 export async function GET(request: Request) {
   try {
@@ -7,6 +7,8 @@ export async function GET(request: Request) {
     const channelId = searchParams.get('channel') || CHANNELS[0].id
     
     const data = getCurrentProgram(channelId)
+    const previousVideos = getPreviousPrograms(15)
+    const upcomingResult = getUpcomingPrograms(channelId, 15)
     const serverTime = Date.now()
     
     const headers = {
@@ -25,7 +27,9 @@ export async function GET(request: Request) {
         isFirstInCycle: data.programIndex === 0,
         scheduleVersion: SCHEDULE_VERSION,
         masterEpoch: MASTER_EPOCH_START,
-        availableChannels: CHANNELS.map(c => ({ id: c.id, name: c.name, language: c.language, icon: c.icon }))
+        availableChannels: CHANNELS.map(c => ({ id: c.id, name: c.name, language: c.language, icon: c.icon })),
+        previousVideos,
+        upcomingVideos: upcomingResult.upcoming
       },
       serverTimestamp: serverTime
     }, { headers })

@@ -7,7 +7,7 @@ import { DonateButton } from '@/components/donate-button'
 import { ScheduleModal } from '@/components/schedule-modal'
 import { AboutModal } from '@/components/about-modal'
 import { ChannelSelector } from '@/components/channel-selector'
-import { CHANNELS } from '@/lib/schedule-utils'
+import { CHANNELS, getSavedChannel, saveChannel } from '@/lib/schedule-utils'
 
 export default function Home() {
   const [activeChannelId, setActiveChannelId] = useState<string>('')
@@ -17,13 +17,19 @@ export default function Home() {
   const [currentProgramId, setCurrentProgramId] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
   const [hasUserInteracted, setHasUserInteracted] = useState(false)
+  const [showStartModal, setShowStartModal] = useState(false)
 
   // Check localStorage for saved channel on initial load
   useEffect(() => {
-    const savedChannel = localStorage.getItem('deeni-tv-channel')
+    const savedChannel = getSavedChannel()
     if (savedChannel && CHANNELS.some(c => c.id === savedChannel)) {
       setActiveChannelId(savedChannel)
       setHasUserInteracted(true)
+      // If channel exists, show start modal
+      setShowStartModal(true)
+    } else {
+      // First time user - show channel selector immediately
+      setIsChannelSelectorOpen(true)
     }
     setIsLoading(false)
   }, [])
@@ -53,15 +59,24 @@ export default function Home() {
 
   const handleSelectChannel = (channelId: string) => {
     setActiveChannelId(channelId)
-    localStorage.setItem('deeni-tv-channel', channelId)
+    saveChannel(channelId)
     setHasUserInteracted(true)
     setIsChannelSelectorOpen(false)
+    
+    // After channel selection, show start modal
+    setTimeout(() => {
+      setShowStartModal(true)
+    }, 300)
+  }
+
+  const handleStartClick = () => {
+    setShowStartModal(false)
+    // The video player will handle the actual playback
   }
 
   const handleMenuOptionSelect = (option: 'language' | 'schedule' | 'about') => {
     setIsMenuOpen(false)
     
-    // Map 'language' option to channel selector
     if (option === 'language') {
       setTimeout(() => {
         setIsChannelSelectorOpen(true)
@@ -80,25 +95,32 @@ export default function Home() {
   // If still loading initial state, show minimal loading
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-zinc-950">
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-white">Loading Deeni.tv...</p>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+            <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-pulse"></div>
+          </div>
+          <p className="text-white/80 text-lg font-light">Loading Deeni.tv...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <main className="relative min-h-screen bg-zinc-950">
-      {/* Donate Button - Fixed position */}
-      <DonateButton />
+    <main className="relative min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-950 to-black safe-top safe-bottom">
+      {/* Donate Button - Fixed position with glass effect */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <DonateButton />
+      </div>
       
       {/* Synchronized Video Player */}
       <SyncedVideoPlayer 
         onMenuOpen={() => setIsMenuOpen(true)}
         initialChannelId={activeChannelId}
         onChannelChange={setActiveChannelId}
+        showStartModal={showStartModal}
+        onStartClick={handleStartClick}
       />
       
       {/* Menu Drawer - Slides from bottom */}
@@ -110,15 +132,16 @@ export default function Home() {
       
       {/* Channel/Language Selector */}
       <ChannelSelector
-        isOpen={isChannelSelectorOpen || (!hasUserInteracted && !activeChannelId)}
+        isOpen={isChannelSelectorOpen}
         onClose={() => {
           setIsChannelSelectorOpen(false)
-          // If user closes without selecting, set default channel
+          // If user closes without selecting and no channel exists, set default
           if (!activeChannelId) {
             const defaultChannel = CHANNELS[0].id
             setActiveChannelId(defaultChannel)
-            localStorage.setItem('deeni-tv-channel', defaultChannel)
+            saveChannel(defaultChannel)
             setHasUserInteracted(true)
+            setShowStartModal(true)
           }
         }}
         channels={CHANNELS}
