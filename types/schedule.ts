@@ -8,15 +8,16 @@ export interface VideoProgram {
   endTime?: Date
   category: string
   language: string
-  thumbnail?: string
   channelId: string
+  thumbnail?: string
+  watchedAt?: number // timestamp when video was watched (for previous list)
 }
 
 export interface Channel {
   id: string
   name: string
   language: string
-  icon?: string
+  icon: string
   programs: VideoProgram[]
 }
 
@@ -38,8 +39,9 @@ export interface ApiResponse {
     nextProgramStartTime: number
     scheduleVersion: string
     totalPrograms: number
-    isLastInCycle: boolean
     channelId: string
+    previousVideos?: VideoProgram[]
+    upcomingVideos?: VideoProgram[]
   }
   serverTimestamp: number
 }
