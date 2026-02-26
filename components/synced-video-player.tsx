@@ -210,7 +210,6 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
           'max-w-4xl px-8'
         }`}>
           <div className="text-center">
-            {/* Modern TV Loading Animation */}
             <div className="relative mb-8 md:mb-12">
               <motion.div
                 animate={{ 
@@ -230,7 +229,6 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
                   'h-32 w-32'
                 } text-primary mx-auto relative z-10`} />
                 
-                {/* Scanning Line Effect */}
                 <motion.div
                   animate={{ 
                     y: ['-100%', '200%'],
@@ -274,7 +272,6 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
               Your Spiritual TV Experience
             </motion.p>
             
-            {/* Feature Tags - Hide on mobile */}
             {!isMobile && (
               <motion.div 
                 className="flex flex-wrap items-center justify-center gap-2 mb-8 md:mb-10"
@@ -407,7 +404,7 @@ const DeeniLogo = ({ isMobile = false }: { isMobile?: boolean }) => {
   )
 }
 
-// Desktop Ticker Component
+// Desktop Ticker Component - Enhanced bold text, 360-degree infinite scroll
 const DesktopTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }: { 
   videos: VideoProgram[], 
   currentIndex: number,
@@ -422,7 +419,7 @@ const DesktopTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }
           transition={{ duration: 20, repeat: Infinity, ease: "linear", repeatType: "loop" }}
           className="whitespace-nowrap"
         >
-          <span className="text-white/80 font-medium px-4 text-sm">
+          <span className="text-white/90 font-bold px-4 text-sm">
             <RadioIcon className="inline h-3 w-3 mr-2 text-primary animate-pulse" />
             More content coming...
           </span>
@@ -432,7 +429,7 @@ const DesktopTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }
   }
 
   const items: JSX.Element[] = []
-  const repeatCount = 30
+  const repeatCount = 40 // Very high for true 360-degree infinite loop
   
   for (let i = 0; i < repeatCount; i++) {
     videos.forEach((video, index) => {
@@ -447,21 +444,21 @@ const DesktopTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }
       items.push(
         <div key={`${video.id}-${i}-${index}`} className="inline-flex items-center mx-5">
           <span className={`
-            px-2 py-0.5 rounded-full text-xs font-bold mr-3 whitespace-nowrap
+            px-2 py-0.5 rounded-full text-xs font-black mr-3 whitespace-nowrap
             ${isNextVideo 
-              ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 shadow-lg shadow-yellow-500/20' 
-              : 'bg-white/20 text-white/90 border border-white/30 shadow-lg'
+              ? 'bg-yellow-500/30 text-yellow-300 border border-yellow-500/70 shadow-lg shadow-yellow-500/30 font-extrabold' 
+              : 'bg-white/30 text-white border border-white/40 shadow-lg font-bold'
             }
           `}>
             {prefix}
           </span>
-          <span className={`font-medium text-sm whitespace-nowrap ${
-            isNextVideo ? 'text-yellow-400' : 'text-white/80'
+          <span className={`font-black text-sm whitespace-nowrap tracking-wide ${
+            isNextVideo ? 'text-yellow-300' : 'text-white'
           }`}>
             {video.title}
           </span>
-          <span className={`ml-3 font-mono text-sm font-bold whitespace-nowrap ${
-            isNextVideo ? 'text-yellow-400' : 'text-white/60'
+          <span className={`ml-3 font-mono text-sm font-black whitespace-nowrap ${
+            isNextVideo ? 'text-yellow-300' : 'text-white/80'
           }`}>
             {duration}
           </span>
@@ -475,14 +472,16 @@ const DesktopTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }
 
   return (
     <div className="relative flex overflow-hidden h-full items-center group">
+      {/* Gradient Fades */}
       <div className="absolute left-0 top-0 bottom-0 w-16 bg-gradient-to-r from-black/95 to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-black/95 to-transparent z-10 pointer-events-none" />
       
+      {/* Infinite Scrolling - 360-degree never ends */}
       <motion.div
         className="flex whitespace-nowrap"
-        animate={{ x: [0, -15000] }}
+        animate={{ x: [0, -20000] }}
         transition={{ 
-          duration: 120, 
+          duration: 150, 
           repeat: Infinity, 
           ease: "linear",
           repeatType: "loop"
@@ -495,7 +494,7 @@ const DesktopTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }
   )
 }
 
-// Mobile Ticker Component
+// Mobile Ticker Component - Enhanced, more items visible
 const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }: { 
   videos: VideoProgram[], 
   currentIndex: number,
@@ -510,7 +509,7 @@ const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }:
           transition={{ duration: 20, repeat: Infinity, ease: "linear", repeatType: "loop" }}
           className="whitespace-nowrap"
         >
-          <span className="text-white/80 font-medium px-2 text-[10px]">
+          <span className="text-white/90 font-bold px-2 text-[10px]">
             More content coming...
           </span>
         </motion.div>
@@ -519,7 +518,7 @@ const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }:
   }
 
   const items: JSX.Element[] = []
-  const repeatCount = 25
+  const repeatCount = 30 // Very high for true 360-degree infinite loop
   
   for (let i = 0; i < repeatCount; i++) {
     videos.forEach((video, index) => {
@@ -532,28 +531,28 @@ const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }:
       if (isCurrentVideo) return;
       
       items.push(
-        <div key={`${video.id}-${i}-${index}`} className="inline-flex items-center mx-3">
+        <div key={`${video.id}-${i}-${index}`} className="inline-flex items-center mx-2">
           <span className={`
-            px-1.5 py-0.5 rounded-full text-[9px] font-bold mr-2 whitespace-nowrap
+            px-1.5 py-0.5 rounded-full text-[9px] font-black mr-1.5 whitespace-nowrap
             ${isNextVideo 
-              ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 shadow-sm' 
-              : 'bg-white/20 text-white/90 border border-white/30 shadow-sm'
+              ? 'bg-yellow-500/30 text-yellow-300 border border-yellow-500/70 shadow-sm font-extrabold' 
+              : 'bg-white/30 text-white border border-white/40 shadow-sm font-bold'
             }
           `}>
             {prefix}
           </span>
-          <span className={`text-[11px] whitespace-nowrap ${
-            isNextVideo ? 'text-yellow-400' : 'text-white/80'
+          <span className={`font-black text-[11px] whitespace-nowrap tracking-wide ${
+            isNextVideo ? 'text-yellow-300' : 'text-white'
           }`}>
             {video.title}
           </span>
-          <span className={`ml-2 font-mono text-[10px] font-bold whitespace-nowrap ${
-            isNextVideo ? 'text-yellow-400' : 'text-white/60'
+          <span className={`ml-1.5 font-mono text-[10px] font-black whitespace-nowrap ${
+            isNextVideo ? 'text-yellow-300' : 'text-white/80'
           }`}>
             {duration}
           </span>
           {isFirstInNextCycle && (
-            <RefreshCcw className="h-2.5 w-2.5 ml-2 text-primary animate-spin-slow flex-shrink-0" />
+            <RefreshCcw className="h-2 w-2 ml-1.5 text-primary animate-spin-slow flex-shrink-0" />
           )}
         </div>
       )
@@ -562,14 +561,16 @@ const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }:
 
   return (
     <div className="relative flex overflow-hidden h-full items-center">
+      {/* Gradient Fades */}
       <div className="absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-black/95 to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-black/95 to-transparent z-10 pointer-events-none" />
       
+      {/* Infinite Scrolling - 360-degree never ends */}
       <motion.div
         className="flex whitespace-nowrap"
-        animate={{ x: [0, -8000] }}
+        animate={{ x: [0, -10000] }}
         transition={{ 
-          duration: 90, 
+          duration: 100, 
           repeat: Infinity, 
           ease: "linear",
           repeatType: "loop"
@@ -653,6 +654,7 @@ export function SyncedVideoPlayer({
   const [currentTime, setCurrentTime] = useState(0)
   const [timeRemaining, setTimeRemaining] = useState('0:00')
   const [displayTime, setDisplayTime] = useState('0:00')
+  const [videoDuration, setVideoDuration] = useState(0)
   const [cycleInfo, setCycleInfo] = useState({ current: 1, total: 1 })
   const [upcomingVideos, setUpcomingVideos] = useState<VideoProgram[]>([])
   
@@ -675,23 +677,29 @@ export function SyncedVideoPlayer({
   const masterEpochRef = useRef<number>(MASTER_EPOCH_START)
   const timeUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const videoEndTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isTransitioningRef = useRef(false)
   
   // YouTube player hook
   const { 
     containerRef: youtubeContainerRef, 
     initializePlayer, 
     loadVideo, 
+    getDuration,
     setVolume: setYouTubeVolume,
     setMuted: setYouTubeMuted,
     seekTo,
+    getCurrentTime,
     play,
     destroy
   } = useYouTubePlayer()
 
-  // Load previous videos on mount
+  // Load previous videos when channel changes
   useEffect(() => {
-    setPreviousVideos(getPreviousVideos())
-  }, [])
+    if (currentChannelId) {
+      const saved = getPreviousVideos(currentChannelId)
+      setPreviousVideos(saved)
+    }
+  }, [currentChannelId])
 
   // Update showStartScreen when prop changes
   useEffect(() => {
@@ -705,25 +713,30 @@ export function SyncedVideoPlayer({
     }
   }, [initialChannelId, currentChannelId])
 
-  // Define playNextVideo first to avoid circular dependency
+  // Play next video function - CRITICAL for continuous playback
   const playNextVideo = useCallback(() => {
-    if (!currentProgram || !nextProgram || !currentChannelId) {
+    if (isTransitioningRef.current || !currentProgram || !nextProgram || !currentChannelId) {
       console.log('❌ Cannot play next video: missing program or channel')
       return
     }
     
+    isTransitioningRef.current = true
+    
     console.log('▶️ Playing next video:', nextProgram.title)
     
     // Add current video to previous list
-    const updatedPrevious = addToPreviousVideos(currentProgram)
-    setPreviousVideos(updatedPrevious)
+    if (currentProgram) {
+      const updatedPrevious = addToPreviousVideos(currentChannelId, currentProgram)
+      setPreviousVideos(updatedPrevious)
+    }
     
     const startTime = 0
     
-    // Update current program to next
+    // Update state with next program
     setCurrentProgram(nextProgram)
     setCurrentTime(startTime)
     setDisplayTime(formatTime(startTime))
+    setVideoDuration(nextProgram.duration)
     
     // Find the next next program
     const programs = getChannelPrograms(currentChannelId)
@@ -738,13 +751,12 @@ export function SyncedVideoPlayer({
       total: prev.total 
     }))
     
-    // Update upcoming videos (remove first, add next)
-    const newUpcoming = [...upcomingVideos.slice(1)]
-    const nextNextPrograms = []
+    // Update upcoming videos list
+    const newUpcoming: VideoProgram[] = []
     for (let i = 1; i <= 15; i++) {
-      nextNextPrograms.push(programs[(currentIndex + i) % programs.length])
+      newUpcoming.push(programs[(currentIndex + i) % programs.length])
     }
-    setUpcomingVideos(nextNextPrograms)
+    setUpcomingVideos(newUpcoming)
     
     // Clear any existing timeout
     if (videoEndTimeoutRef.current) {
@@ -761,66 +773,54 @@ export function SyncedVideoPlayer({
       setYouTubeVolume(volume)
       setYouTubeMuted(isMuted)
       
+      // Small delay to ensure video is loaded
       setTimeout(() => {
         play()
         console.log('▶️ Playing next video now')
-      }, 100)
+        isTransitioningRef.current = false
+        
+        // Get duration from YouTube API
+        const duration = getDuration()
+        if (duration && duration > 0) {
+          setVideoDuration(duration)
+        }
+      }, 200)
     } else {
       console.error('❌ Failed to load next video')
+      isTransitioningRef.current = false
     }
     
-  }, [currentProgram, nextProgram, currentChannelId, upcomingVideos, loadVideo, volume, isMuted, setYouTubeVolume, setYouTubeMuted, play])
+  }, [currentProgram, nextProgram, currentChannelId, loadVideo, volume, isMuted, setYouTubeVolume, setYouTubeMuted, play, getDuration])
 
+  // Update time display - uses actual video time from YouTube
   const updateTimeDisplay = useCallback(() => {
-    if (!currentProgram || !currentChannelId) return
+    if (!currentProgram || isTransitioningRef.current) return
     
-    const now = Date.now() + serverTimeOffset
-    const programs = getChannelPrograms(currentChannelId)
-    if (programs.length === 0) return
+    // Get current time from YouTube player
+    const playerTime = getCurrentTime()
     
-    const totalDuration = programs.reduce((sum, p) => sum + p.duration, 0)
-    
-    const elapsedSinceEpoch = Math.floor((now - masterEpochRef.current) / 1000)
-    const cyclePosition = elapsedSinceEpoch % totalDuration
-    
-    let accumulatedTime = 0
-    let foundTime = 0
-    let foundIndex = 0
-    
-    for (let i = 0; i < programs.length; i++) {
-      const program = programs[i]
-      if (cyclePosition >= accumulatedTime && cyclePosition < accumulatedTime + program.duration) {
-        foundTime = cyclePosition - accumulatedTime
-        foundIndex = i
-        break
-      }
-      accumulatedTime += program.duration
-    }
-    
-    setCurrentTime(foundTime)
-    setDisplayTime(formatTime(foundTime))
-    
-    const remainingTime = currentProgram ? currentProgram.duration - foundTime : 0
-    const remainingFormatted = formatTime(remainingTime)
-    setTimeRemaining(remainingFormatted)
-    
-    if (foundIndex + 1 !== cycleInfo.current) {
-      setCycleInfo({ current: foundIndex + 1, total: programs.length })
-    }
-    
-    if (currentProgram && remainingTime <= 1 && remainingTime > 0) {
-      console.log('⚠️ Video ending soon at', displayTime)
-      if (videoEndTimeoutRef.current) {
-        clearTimeout(videoEndTimeoutRef.current)
-      }
-      videoEndTimeoutRef.current = setTimeout(() => {
-        if (mountedRef.current) {
-          console.log('📺 Video end timeout triggered')
-          playNextVideo()
+    if (playerTime !== undefined && !isNaN(playerTime)) {
+      setCurrentTime(playerTime)
+      setDisplayTime(formatTime(playerTime))
+      
+      // Use video duration from YouTube API if available, otherwise use program duration
+      const duration = getDuration()
+      const actualDuration = duration > 0 ? duration : videoDuration
+      
+      const remaining = Math.max(0, actualDuration - playerTime)
+      setTimeRemaining(formatTime(remaining))
+      
+      // Check if video is near the end (less than 0.5 seconds remaining)
+      if (actualDuration > 0 && remaining <= 0.5 && !isTransitioningRef.current && nextProgram) {
+        console.log('⚠️ Video ending soon, preparing next video...')
+        if (videoEndTimeoutRef.current) {
+          clearTimeout(videoEndTimeoutRef.current)
         }
-      }, Math.max(0, remainingTime * 1000))
+        // Play next video immediately
+        playNextVideo()
+      }
     }
-  }, [currentProgram, currentChannelId, serverTimeOffset, cycleInfo.current, displayTime, playNextVideo])
+  }, [currentProgram, getCurrentTime, getDuration, videoDuration, nextProgram, playNextVideo])
 
   const loadChannel = useCallback(async (channelId: string) => {
     if (isLoading) return
@@ -831,6 +831,10 @@ export function SyncedVideoPlayer({
     onChannelChange?.(channelId)
     
     saveChannel(channelId)
+    
+    // Load previous videos for this channel
+    const savedPrevious = getPreviousVideos(channelId)
+    setPreviousVideos(savedPrevious)
     
     try {
       console.log('🎬 Loading channel:', channelId)
@@ -868,28 +872,20 @@ export function SyncedVideoPlayer({
       setCurrentTime(startTime)
       setDisplayTime(formatTime(startTime))
       setTimeRemaining(formatTime(result.data.timeRemaining))
+      setVideoDuration(program.duration)
       setCycleInfo({ 
         current: result.data.programIndex + 1, 
         total: result.data.totalPrograms 
       })
       
-      // Set upcoming videos from API
-      if (result.data.upcomingVideos) {
-        setUpcomingVideos(result.data.upcomingVideos)
-      } else {
-        const programs = getChannelPrograms(channelId)
-        const upcoming: VideoProgram[] = []
-        for (let i = 1; i <= 15; i++) {
-          const nextIndex = (result.data.programIndex + i) % programs.length
-          upcoming.push(programs[nextIndex])
-        }
-        setUpcomingVideos(upcoming)
+      // Set upcoming videos
+      const programs = getChannelPrograms(channelId)
+      const upcoming: VideoProgram[] = []
+      for (let i = 1; i <= 15; i++) {
+        const nextIndex = (result.data.programIndex + i) % programs.length
+        upcoming.push(programs[nextIndex])
       }
-      
-      // Set previous videos from API
-      if (result.data.previousVideos) {
-        setPreviousVideos(result.data.previousVideos)
-      }
+      setUpcomingVideos(upcoming)
       
       lastVideoIdRef.current = program.videoId
       
@@ -914,6 +910,12 @@ export function SyncedVideoPlayer({
             
             seekTo(startTime, true)
             play()
+            
+            // Get actual duration from YouTube
+            const duration = getDuration()
+            if (duration && duration > 0) {
+              setVideoDuration(duration)
+            }
             
             setYouTubeVolume(volume)
             setYouTubeMuted(false)
@@ -941,6 +943,12 @@ export function SyncedVideoPlayer({
               play()
             }
           },
+          onDurationChange: (duration) => {
+            if (duration && duration > 0) {
+              console.log('📏 Video duration:', duration)
+              setVideoDuration(duration)
+            }
+          },
           onError: (code, msg) => {
             console.error('Player error:', code, msg)
             if (code === 2 || code === 5 || code === 100) {
@@ -959,7 +967,7 @@ export function SyncedVideoPlayer({
       setApiError(error instanceof Error ? error.message : 'Failed to load video')
       setIsLoading(false)
     }
-  }, [isLoading, playerReady, volume, initializePlayer, loadVideo, seekTo, play, setYouTubeVolume, setYouTubeMuted, onChannelChange, onStartClick, playNextVideo])
+  }, [isLoading, playerReady, volume, initializePlayer, loadVideo, seekTo, play, setYouTubeVolume, setYouTubeMuted, onChannelChange, onStartClick, getDuration, playNextVideo])
 
   const handleFirstTimeStart = useCallback(() => {
     if (!currentChannelId) {
@@ -998,30 +1006,18 @@ export function SyncedVideoPlayer({
       setServerTimeOffset(offset)
       
       // Only update upcoming videos, don't interrupt current playback
-      if (result.data.upcomingVideos) {
-        setUpcomingVideos(result.data.upcomingVideos)
+      const programs = getChannelPrograms(currentChannelId)
+      const upcoming: VideoProgram[] = []
+      for (let i = 1; i <= 15; i++) {
+        const nextIndex = (result.data.programIndex + i) % programs.length
+        upcoming.push(programs[nextIndex])
       }
-      
-      // Update previous videos if needed
-      if (result.data.previousVideos) {
-        setPreviousVideos(prev => {
-          // Merge with existing, avoiding duplicates
-          const existingIds = new Set(prev.map(v => v.id))
-          const newVideos = result.data.previousVideos.filter(v => !existingIds.has(v.id))
-          return [...prev, ...newVideos].slice(0, 30)
-        })
-      }
-      
-      // Check if program changed (optional, but we don't interrupt)
-      if (currentProgram && result.data.program.id !== currentProgram.id) {
-        console.log('📺 Program changed on server - updating upcoming list only')
-        // Don't change current program
-      }
+      setUpcomingVideos(upcoming)
       
     } catch (error) {
       console.error('Sync failed:', error)
     }
-  }, [playerReady, currentChannelId, currentProgram])
+  }, [playerReady, currentChannelId])
 
   const handleReload = useCallback(() => {
     console.log('🔄 Reloading...')
@@ -1037,6 +1033,53 @@ export function SyncedVideoPlayer({
     }, 100)
   }, [destroy])
 
+  // Handle playing from previous videos
+  const handlePlayFromPrevious = useCallback((video: VideoProgram) => {
+    if (!currentChannelId || !playerReady || isTransitioningRef.current) return
+    
+    isTransitioningRef.current = true
+    
+    console.log('▶️ Playing from previous list:', video.title)
+    
+    // Add current video to previous before switching
+    if (currentProgram) {
+      addToPreviousVideos(currentChannelId, currentProgram)
+    }
+    
+    // Update state
+    setCurrentProgram(video)
+    setCurrentTime(0)
+    setDisplayTime(formatTime(0))
+    setVideoDuration(video.duration)
+    
+    // Find next program
+    const programs = getChannelPrograms(currentChannelId)
+    const currentIndex = programs.findIndex(p => p.id === video.id)
+    const nextIndex = (currentIndex + 1) % programs.length
+    setNextProgram(programs[nextIndex])
+    
+    // Update upcoming
+    const upcoming: VideoProgram[] = []
+    for (let i = 1; i <= 15; i++) {
+      upcoming.push(programs[(currentIndex + i) % programs.length])
+    }
+    setUpcomingVideos(upcoming)
+    
+    // Update cycle info
+    setCycleInfo({ current: currentIndex + 1, total: programs.length })
+    
+    // Load and play
+    lastVideoIdRef.current = video.videoId
+    loadVideo(video.videoId, 0)
+    
+    setTimeout(() => {
+      play()
+      isTransitioningRef.current = false
+    }, 200)
+    
+  }, [currentChannelId, playerReady, currentProgram, loadVideo, play])
+
+  // Fullscreen handlers
   const handleFullscreen = async () => {
     if (!playerRef.current) return
     
@@ -1062,8 +1105,9 @@ export function SyncedVideoPlayer({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
 
+  // Time update interval - runs every 100ms for smooth display
   useEffect(() => {
-    if (!playerReady || !currentProgram) return
+    if (!playerReady || !currentProgram || isTransitioningRef.current) return
     
     timeUpdateIntervalRef.current = setInterval(() => {
       updateTimeDisplay()
@@ -1074,8 +1118,9 @@ export function SyncedVideoPlayer({
         clearInterval(timeUpdateIntervalRef.current)
       }
     }
-  }, [playerReady, currentProgram, updateTimeDisplay])
+  }, [playerReady, currentProgram, updateTimeDisplay, isTransitioningRef.current])
 
+  // 5-minute sync interval
   useEffect(() => {
     if (!playerReady) return
     
@@ -1094,6 +1139,7 @@ export function SyncedVideoPlayer({
     }
   }, [playerReady, syncWithServer])
 
+  // Cleanup
   useEffect(() => {
     mountedRef.current = true
     
@@ -1330,7 +1376,7 @@ export function SyncedVideoPlayer({
                 </div>
               )}
 
-              {/* BOTTOM TICKER */}
+              {/* BOTTOM TICKER - 360-degree infinite scroll, bold text */}
               {showTicker && (
                 <motion.div
                   initial={{ y: 100 }}
@@ -1347,7 +1393,7 @@ export function SyncedVideoPlayer({
                         <DeeniLogo isMobile={isMobile} />
                       </div>
 
-                      {/* Desktop Ticker */}
+                      {/* Desktop Ticker - 360-degree infinite scroll */}
                       {!isMobile && (
                         <>
                           <div className="flex-1 min-w-0 overflow-hidden mx-4">
@@ -1359,26 +1405,26 @@ export function SyncedVideoPlayer({
                             />
                           </div>
                           
-                          {/* Time Section */}
+                          {/* Time Section - Bold text */}
                           <div className="flex items-center gap-3 flex-shrink-0">
                             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
                               <Clock className="h-3.5 w-3.5 text-primary" />
-                              <span className="text-white/90 font-medium text-xs whitespace-nowrap">
-                                {displayTime} / {formatTime(currentProgram.duration)}
+                              <span className="text-white font-black text-xs whitespace-nowrap">
+                                {displayTime} / {formatTime(videoDuration)}
                               </span>
                             </div>
                             
                             {timeRemaining && (
                               <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
                                 <Hourglass className="h-3.5 w-3.5 text-primary" />
-                                <span className="text-primary font-medium text-xs whitespace-nowrap">
+                                <span className="text-primary font-black text-xs whitespace-nowrap">
                                   {timeRemaining}
                                 </span>
                               </div>
                             )}
                             
                             {/* Previous Videos Button */}
-                            {/* <Button
+                            <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => setShowPreviousModal(true)}
@@ -1386,12 +1432,12 @@ export function SyncedVideoPlayer({
                               title="Previously Watched"
                             >
                               <History className="h-4 w-4" />
-                            </Button> */}
+                            </Button>
                           </div>
                         </>
                       )}
                       
-                      {/* Mobile Ticker */}
+                      {/* Mobile Ticker - 360-degree infinite scroll, bold text */}
                       {isMobile && (
                         <>
                           <div className="flex-1 min-w-0 overflow-hidden ml-2">
@@ -1403,22 +1449,34 @@ export function SyncedVideoPlayer({
                             />
                           </div>
                           
-                          {/* Mobile Time */}
-                          <div className="absolute -top-8 right-2 flex items-center gap-1 z-40">
-                            <div className="flex items-center gap-1 px-1.5 py-1 bg-black/70 backdrop-blur-sm rounded border border-white/20 shadow-lg">
-                              <Clock className="h-2.5 w-2.5 text-primary" />
-                              <span className="text-white/90 font-medium text-[9px] whitespace-nowrap">
+                          {/* Mobile Time - Positioned at top right of ticker */}
+                          <div className="absolute -top-10 right-2 flex items-center gap-1 z-40 bg-black/70 backdrop-blur-md px-2 py-1 rounded-lg border border-white/20 shadow-lg">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3 text-primary" />
+                              <span className="text-white font-black text-[10px] whitespace-nowrap">
                                 {displayTime}
                               </span>
                             </div>
-                            {timeRemaining && (
-                              <div className="flex items-center gap-1 px-1.5 py-1 bg-black/70 backdrop-blur-sm rounded border border-white/20 shadow-lg">
-                                <Hourglass className="h-2.5 w-2.5 text-primary" />
-                                <span className="text-primary font-medium text-[9px] whitespace-nowrap">
-                                  {timeRemaining}
-                                </span>
-                              </div>
-                            )}
+                            <span className="text-white/30 text-[8px] mx-0.5">|</span>
+                            <div className="flex items-center gap-1">
+                              <Hourglass className="h-3 w-3 text-primary" />
+                              <span className="text-primary font-black text-[10px] whitespace-nowrap">
+                                {timeRemaining}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Mobile Previous Videos Button - Moved to left */}
+                          <div className="absolute -top-10 left-2 z-40">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setShowPreviousModal(true)}
+                              className="text-white/90 hover:bg-white/20 rounded-full bg-black/70 backdrop-blur-sm border border-white/20 h-6 w-6"
+                              title="Previously Watched"
+                            >
+                              <History className="h-3 w-3" />
+                            </Button>
                           </div>
                         </>
                       )}
@@ -1488,7 +1546,7 @@ export function SyncedVideoPlayer({
                               { icon: showTicker ? EyeOff : Eye, onClick: () => setShowTicker(!showTicker), title: showTicker ? 'Hide Ticker' : 'Show Ticker' },
                               { icon: History, onClick: () => setShowPreviousModal(true), title: 'Previously Watched' },
                               { icon: RefreshCw, onClick: handleReload, title: 'Reload' },
-                              // { icon: isFullscreen ? Minimize : Maximize, onClick: handleFullscreen, title: isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' },
+                              { icon: isFullscreen ? Minimize : Maximize, onClick: handleFullscreen, title: isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' },
                               { icon: MoreHorizontal, onClick: onMenuOpen, title: 'Menu' },
                             ].map((item, index) => (
                               <motion.div
@@ -1562,7 +1620,7 @@ export function SyncedVideoPlayer({
                   {[
                     { label: 'Category', value: currentProgram.category },
                     { label: 'Language', value: currentProgram.language },
-                    { label: 'Duration', value: formatTime(currentProgram.duration) },
+                    { label: 'Duration', value: formatTime(videoDuration) },
                     { label: 'Program', value: `${cycleInfo.current}/${cycleInfo.total}` },
                   ].map((item, i) => (
                     <div key={i} className="bg-white/5 rounded-xl p-3 border border-white/10">
@@ -1591,11 +1649,8 @@ export function SyncedVideoPlayer({
         isOpen={showPreviousModal}
         onClose={() => setShowPreviousModal(false)}
         videos={previousVideos}
-        onPlayVideo={(video) => {
-          // Handle playing from previous list
-          console.log('Play video:', video)
-          // You can implement this to load the selected video
-        }}
+        onPlayVideo={handlePlayFromPrevious}
+        currentChannelId={currentChannelId}
       />
     </div>
   )
