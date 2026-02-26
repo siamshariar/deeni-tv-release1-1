@@ -1424,7 +1424,7 @@ export function SyncedVideoPlayer({
                             )}
                             
                             {/* Previous Videos Button */}
-                            <Button
+                            {/* <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => setShowPreviousModal(true)}
@@ -1432,7 +1432,7 @@ export function SyncedVideoPlayer({
                               title="Previously Watched"
                             >
                               <History className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </>
                       )}
@@ -1467,7 +1467,7 @@ export function SyncedVideoPlayer({
                           </div>
                           
                           {/* Mobile Previous Videos Button - Moved to left */}
-                          {/* <div className="absolute -top-10 left-2 z-40">
+                          <div className="absolute -top-10 left-2 z-40">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -1477,7 +1477,7 @@ export function SyncedVideoPlayer({
                             >
                               <History className="h-3 w-3" />
                             </Button>
-                          </div> */}
+                          </div>
                         </>
                       )}
                     </div>
