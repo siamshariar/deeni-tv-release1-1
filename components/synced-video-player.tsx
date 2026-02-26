@@ -1467,7 +1467,7 @@ export function SyncedVideoPlayer({
                           </div>
                           
                           {/* Mobile Previous Videos Button - Moved to left */}
-                          <div className="absolute -top-10 left-2 z-40">
+                          {/* <div className="absolute -top-10 left-2 z-40">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -1477,7 +1477,7 @@ export function SyncedVideoPlayer({
                             >
                               <History className="h-3 w-3" />
                             </Button>
-                          </div>
+                          </div> */}
                         </>
                       )}
                     </div>
@@ -1546,7 +1546,7 @@ export function SyncedVideoPlayer({
                               { icon: showTicker ? EyeOff : Eye, onClick: () => setShowTicker(!showTicker), title: showTicker ? 'Hide Ticker' : 'Show Ticker' },
                               { icon: History, onClick: () => setShowPreviousModal(true), title: 'Previously Watched' },
                               { icon: RefreshCw, onClick: handleReload, title: 'Reload' },
-                              { icon: isFullscreen ? Minimize : Maximize, onClick: handleFullscreen, title: isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' },
+                              // { icon: isFullscreen ? Minimize : Maximize, onClick: handleFullscreen, title: isFullscreen ? 'Exit Fullscreen' : 'Fullscreen' },
                               { icon: MoreHorizontal, onClick: onMenuOpen, title: 'Menu' },
                             ].map((item, index) => (
                               <motion.div
