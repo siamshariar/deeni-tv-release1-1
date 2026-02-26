@@ -50,7 +50,7 @@ const BENGALI_VIDEOS: VideoProgram[] = [
     id: 'b5',
     videoId: 'wX1AEPleTHw',
     title: 'Siyam Sunnah & Rules – রোজার নিয়ত ও সুন্নত',
-    description: 'রোজার নিয়ত ও সুন্নত সম্পর্কে ড. আব্দুল্লাহ জাঙ্গীর এর আলোচনা',
+    description: 'রোজার নিয়ত ও সুন্নত সম্পর্কে ড. আব্দুল্লাহ জাহাঙ্গীর এর আলোচনা',
     duration: 1200,
     category: 'Lecture',
     language: 'Bengali',
@@ -107,14 +107,14 @@ const ENGLISH_VIDEOS: VideoProgram[] = [
   },
   {
     id: 'e5',
-    videoId: 'p4LQ5jqeawk',
-    title: 'Exams & Fasting – Ramadan 2022 | Dr. Shabir Ally',
+    videoId: 'XOTlqHSCUp0',
+    title: 'Can we Abstain from Fasting during Examinations? - Dr Zakir Naik',
     description: 'Scholar answers practical fasting questions for students.',
     duration: 2800,
     category: 'Q&A',
     language: 'English',
     channelId: 'english-1',
-    thumbnail: 'https://img.youtube.com/vi/p4LQ5jqeawk/maxresdefault.jpg'
+    thumbnail: 'https://img.youtube.com/vi/XOTlqHSCUp0/maxresdefault.jpg'
   }
 ]
 
@@ -224,11 +224,9 @@ export interface UpcomingProgramsResult {
 export const MASTER_EPOCH_START = Date.UTC(2024, 0, 1, 0, 0, 0)
 export const SCHEDULE_VERSION = '1.1.0'
 
-// Local storage key
+// Local storage keys
 export const STORAGE_KEY = 'deeni-tv-channel'
-
-// Previous videos storage key
-export const PREVIOUS_VIDEOS_KEY = 'deeni-tv-previous'
+export const PREVIOUS_VIDEOS_KEY_PREFIX = 'deeni-tv-previous-'
 
 // Get saved channel from localStorage
 export function getSavedChannel(): string | null {
@@ -251,11 +249,12 @@ export function saveChannel(channelId: string): void {
   }
 }
 
-// Get previous videos from localStorage
-export function getPreviousVideos(): VideoProgram[] {
+// Get previous videos from localStorage for specific channel
+export function getPreviousVideos(channelId: string): VideoProgram[] {
   if (typeof window === 'undefined') return []
   try {
-    const saved = localStorage.getItem(PREVIOUS_VIDEOS_KEY)
+    const key = `${PREVIOUS_VIDEOS_KEY_PREFIX}${channelId}`
+    const saved = localStorage.getItem(key)
     return saved ? JSON.parse(saved) : []
   } catch (error) {
     console.error('Error reading previous videos:', error)
@@ -263,21 +262,22 @@ export function getPreviousVideos(): VideoProgram[] {
   }
 }
 
-// Save previous videos to localStorage
-export function savePreviousVideos(videos: VideoProgram[]): void {
+// Save previous videos to localStorage for specific channel
+export function savePreviousVideos(channelId: string, videos: VideoProgram[]): void {
   if (typeof window === 'undefined') return
   try {
+    const key = `${PREVIOUS_VIDEOS_KEY_PREFIX}${channelId}`
     // Keep only last 30 videos
     const recentVideos = videos.slice(0, 30)
-    localStorage.setItem(PREVIOUS_VIDEOS_KEY, JSON.stringify(recentVideos))
+    localStorage.setItem(key, JSON.stringify(recentVideos))
   } catch (error) {
     console.error('Error saving previous videos:', error)
   }
 }
 
-// Add video to previous list
-export function addToPreviousVideos(video: VideoProgram): VideoProgram[] {
-  const previous = getPreviousVideos()
+// Add video to previous list for specific channel
+export function addToPreviousVideos(channelId: string, video: VideoProgram): VideoProgram[] {
+  const previous = getPreviousVideos(channelId)
   
   // Add watched timestamp
   const watchedVideo = {
@@ -292,9 +292,20 @@ export function addToPreviousVideos(video: VideoProgram): VideoProgram[] {
   const updated = [watchedVideo, ...filtered].slice(0, 30)
   
   // Save to localStorage
-  savePreviousVideos(updated)
+  savePreviousVideos(channelId, updated)
   
   return updated
+}
+
+// Clear previous videos for a channel (for testing)
+export function clearPreviousVideos(channelId: string): void {
+  if (typeof window === 'undefined') return
+  try {
+    const key = `${PREVIOUS_VIDEOS_KEY_PREFIX}${channelId}`
+    localStorage.removeItem(key)
+  } catch (error) {
+    console.error('Error clearing previous videos:', error)
+  }
 }
 
 // Get channel programs
@@ -407,10 +418,10 @@ export function getUpcomingPrograms(channelId: string, count: number = 15): Upco
 }
 
 /**
- * Get previous programs (from localStorage)
+ * Get previous programs from localStorage for a channel
  */
-export function getPreviousPrograms(count: number = 15): VideoProgram[] {
-  const previous = getPreviousVideos()
+export function getPreviousPrograms(channelId: string, count: number = 15): VideoProgram[] {
+  const previous = getPreviousVideos(channelId)
   return previous.slice(0, count)
 }
 
@@ -427,7 +438,10 @@ export function formatTime(seconds: number): string {
   if (hours > 0) {
     return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
-  return `${mins}:${secs.toString().padStart(2, '0')}`
+  if (mins > 0) {
+    return `${mins}:${secs.toString().padStart(2, '0')}`
+  }
+  return `0:${secs.toString().padStart(2, '0')}`
 }
 
 /**
