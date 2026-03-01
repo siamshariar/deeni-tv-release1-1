@@ -17,6 +17,7 @@ interface YouTubePlayerOptions {
   onReady?: (player: any) => void
   onStateChange?: (state: number) => void
   onError?: (errorCode: number, errorMessage: string) => void
+  onDurationChange?: (duration: number) => void
 }
 
 declare global {
@@ -32,8 +33,8 @@ export function useYouTubePlayer() {
   const apiReadyRef = useRef<boolean>(false)
   const isMutedRef = useRef<boolean>(true)
   const volumeRef = useRef<number>(75)
-  const errorCountRef = useRef<number>(0)
-  const currentVideoIdRef = useRef<string>('')
+  const durationRef = useRef<number>(0)
+  const videoIdRef = useRef<string>('')
   
   const loadYouTubeAPI = useCallback((): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -65,8 +66,7 @@ export function useYouTubePlayer() {
     
     volumeRef.current = options.volume || 75
     isMutedRef.current = options.muted || true
-    errorCountRef.current = 0
-    currentVideoIdRef.current = options.videoId
+    videoIdRef.current = options.videoId
     
     try {
       await loadYouTubeAPI()
@@ -114,21 +114,31 @@ export function useYouTubePlayer() {
               } else {
                 event.target.unMute()
               }
+              
+              // Get video duration from YouTube API
+              const duration = event.target.getDuration()
+              if (duration && !isNaN(duration) && duration > 0) {
+                durationRef.current = duration
+                options.onDurationChange?.(duration)
+              }
             } catch (err) {}
             options.onReady?.(event.target)
           },
           onStateChange: (event: any) => {
+            // When video is cued or playing, get duration
+            if (event.data === YT_STATE.CUED || event.data === YT_STATE.PLAYING) {
+              try {
+                const duration = event.target.getDuration()
+                if (duration && !isNaN(duration) && duration > 0 && duration !== durationRef.current) {
+                  durationRef.current = duration
+                  options.onDurationChange?.(duration)
+                }
+              } catch (err) {}
+            }
             options.onStateChange?.(event.data)
           },
           onError: (event: any) => {
-            errorCountRef.current++
-            console.error('YouTube player error:', event.data, 'for video:', currentVideoIdRef.current)
-            
-            // Don't show error to user - these videos should work
-            // Just log and continue
-            if (errorCountRef.current > 3) {
-              options.onError?.(event.data, `Error ${event.data}`)
-            }
+            options.onError?.(event.data, `Error ${event.data}`)
           }
         }
       })
@@ -141,18 +151,39 @@ export function useYouTubePlayer() {
     if (!playerRef.current) return false
     
     try {
-      currentVideoIdRef.current = videoId
+      videoIdRef.current = videoId
       if (typeof playerRef.current.loadVideoById === 'function') {
         playerRef.current.loadVideoById({
           videoId,
           startSeconds: startSeconds || 0
         })
+        
+        // Try to get duration after load
+        setTimeout(() => {
+          try {
+            const duration = playerRef.current.getDuration()
+            if (duration && !isNaN(duration) && duration > 0) {
+              durationRef.current = duration
+            }
+          } catch (err) {}
+        }, 500)
+        
         return true
       }
     } catch (err) {
       console.error('Error loading video:', err)
     }
     return false
+  }, [])
+  
+  const getDuration = useCallback((): number => {
+    if (!playerRef.current) return 0
+    try {
+      const duration = playerRef.current.getDuration()
+      return typeof duration === 'number' && !isNaN(duration) ? duration : 0
+    } catch (err) {
+      return durationRef.current
+    }
   }, [])
   
   const setVolume = useCallback((volume: number) => {
@@ -208,6 +239,15 @@ export function useYouTubePlayer() {
     return false
   }, [])
   
+  const getCurrentTime = useCallback((): number => {
+    if (!playerRef.current) return 0
+    try {
+      const time = playerRef.current.getCurrentTime()
+      return typeof time === 'number' && !isNaN(time) ? time : 0
+    } catch (err) {}
+    return 0
+  }, [])
+  
   const destroy = useCallback(() => {
     if (playerRef.current && typeof playerRef.current.destroy === 'function') {
       try {
@@ -216,6 +256,7 @@ export function useYouTubePlayer() {
     }
     playerRef.current = null
     apiReadyRef.current = false
+    durationRef.current = 0
   }, [])
   
   useEffect(() => {
@@ -226,10 +267,12 @@ export function useYouTubePlayer() {
     containerRef,
     initializePlayer,
     loadVideo,
+    getDuration,
     setVolume,
     setMuted,
     play,
     seekTo,
+    getCurrentTime,
     destroy
   }
 }

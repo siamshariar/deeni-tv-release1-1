@@ -95,24 +95,19 @@ export default function Home() {
   // If still loading initial state, show minimal loading
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-950 to-black">
+      <div className="flex items-center justify-center min-h-screen bg-zinc-950">
         <div className="text-center">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
-            <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-pulse"></div>
-          </div>
-          <p className="text-white/80 text-lg font-light">Loading Deeni.tv...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-white">Loading Deeni.tv...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <main className="relative min-h-screen bg-gradient-to-br from-zinc-900 via-zinc-950 to-black safe-top safe-bottom">
-      {/* Donate Button - Fixed position with glass effect */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <DonateButton />
-      </div>
+    <main className="relative min-h-screen bg-zinc-950">
+      {/* Donate Button - Fixed position */}
+      <DonateButton />
       
       {/* Synchronized Video Player */}
       <SyncedVideoPlayer 

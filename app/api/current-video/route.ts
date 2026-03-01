@@ -7,7 +7,14 @@ export async function GET(request: Request) {
     const channelId = searchParams.get('channel') || CHANNELS[0].id
     
     const data = getCurrentProgram(channelId)
-    const previousVideos = getPreviousPrograms(15)
+    
+    // Get language from channel
+    const channel = CHANNELS.find(c => c.id === channelId)
+    const language = channel?.language || 'Bengali'
+    
+    // Get previous videos for this language
+    const previousVideos = getPreviousPrograms(language)
+    
     const upcomingResult = getUpcomingPrograms(channelId, 15)
     const serverTime = Date.now()
     
@@ -29,7 +36,8 @@ export async function GET(request: Request) {
         masterEpoch: MASTER_EPOCH_START,
         availableChannels: CHANNELS.map(c => ({ id: c.id, name: c.name, language: c.language, icon: c.icon })),
         previousVideos,
-        upcomingVideos: upcomingResult.upcoming
+        upcomingVideos: upcomingResult.upcoming,
+        language
       },
       serverTimestamp: serverTime
     }, { headers })
