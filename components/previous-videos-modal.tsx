@@ -1,3 +1,4 @@
+
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
@@ -86,7 +87,7 @@ export function PreviousVideosModal({
             className="fixed inset-0 bg-black/80 backdrop-blur-md z-[60]"
           />
           
-          {/* Modal - Fully Responsive */}
+          {/* Modal - Fully Responsive with scroll only inside */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -99,8 +100,8 @@ export function PreviousVideosModal({
               maxWidth: isMobile ? '100%' : isTablet ? '90%' : '64rem'
             }}
           >
-            {/* Header */}
-            <div className="relative">
+            {/* Header - Fixed */}
+            <div className="relative flex-shrink-0">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10" />
               
               <div className="relative flex items-center justify-between p-4 sm:p-6 border-b border-white/10">
@@ -131,9 +132,9 @@ export function PreviousVideosModal({
               </div>
             </div>
             
-            {/* Videos List */}
+            {/* Videos List - Scrollable inside only */}
             <div 
-              className="overflow-y-auto custom-scrollbar"
+              className="overflow-y-auto custom-scrollbar flex-1"
               style={{
                 maxHeight: isMobile ? 'calc(90vh - 8rem)' : 'calc(80vh - 8rem)'
               }}
@@ -184,7 +185,7 @@ export function PreviousVideosModal({
                             </span>
                             <span className="flex items-center gap-1 text-white/40">
                               <Clock className="h-3 w-3" />
-                              {formatDuration(video.duration)}
+                              {formatTime(video.duration)} {/* Fixed: Now using formatTime instead of formatDuration */}
                             </span>
                             <span className="text-primary/60 text-[8px] sm:text-[10px]">
                               {formatWatchedTime(video.watchedAt)}
@@ -197,14 +198,14 @@ export function PreviousVideosModal({
                           {/* Duration Badge */}
                           <div className="hidden xs:block px-2 sm:px-3 py-1 bg-white/10 rounded-full">
                             <span className="text-white/80 text-[10px] sm:text-xs font-mono whitespace-nowrap">
-                              {formatTime(video.duration)}
+                              {formatTime(video.duration)} {/* Fixed: Using formatTime for consistent display */}
                             </span>
                           </div>
                           
                           {/* Mobile Duration */}
                           <div className="xs:hidden px-1.5 py-0.5 bg-white/10 rounded-full">
                             <span className="text-white/80 text-[8px] font-mono">
-                              {formatTime(video.duration)}
+                              {formatTime(video.duration)} {/* Fixed: Using formatTime for consistent display */}
                             </span>
                           </div>
                           
@@ -263,9 +264,9 @@ export function PreviousVideosModal({
               )}
             </div>
             
-            {/* Footer */}
+            {/* Footer - Fixed */}
             {videos.length > 0 && (
-              <div className="relative border-t border-white/10 p-3 sm:p-4 bg-white/5">
+              <div className="relative border-t border-white/10 p-3 sm:p-4 bg-white/5 flex-shrink-0">
                 <div className="flex items-center justify-between text-[10px] sm:text-xs text-white/40">
                   <span>Showing {Math.min(videos.length, 30)} of 30 videos</span>
                   <span>Last watched: {formatWatchedTime(videos[0]?.watchedAt)}</span>
