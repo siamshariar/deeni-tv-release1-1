@@ -39,6 +39,8 @@ interface SyncedVideoPlayerProps {
   onChannelChange?: (channelId: string) => void
   showStartModal?: boolean
   onStartClick?: () => void
+  openHistoryModal?: boolean
+  onHistoryModalClose?: () => void
 }
 
 // Channel Selector Modal Component
@@ -211,37 +213,45 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
           'max-w-4xl px-8'
         }`}>
           <div className="text-center">
-            <div className="relative mb-8 md:mb-12">
-              <motion.div
-                animate={{ 
-                  rotate: 360,
-                  scale: [1, 1.1, 1],
-                }}
-                transition={{ 
-                  rotate: { duration: 3, repeat: Infinity, ease: "linear" },
-                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                }}
-                className="relative inline-block"
-              >
-                <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl animate-pulse" />
-                <Radio className={`${
-                  isMobile ? 'h-20 w-20' : 
-                  isTablet ? 'h-24 w-24' : 
-                  'h-32 w-32'
-                } text-primary mx-auto relative z-10`} />
-                
+            <div className={`relative flex items-center justify-center ${
+              isMobile ? 'mb-0.5 p-0' : 'mb-6 md:mb-12 p-8'
+            }`}>
+              <div className={`relative flex items-center justify-center ${
+                isMobile ? 'w-24 h-24' : isTablet ? 'w-36 h-36' : 'w-44 h-44'
+              }`}>
                 <motion.div
                   animate={{ 
-                    y: ['-100%', '200%'],
+                    rotate: 360,
+                    scale: isMobile ? [1, 1.02, 1] : [1, 1.05, 1],
                   }}
                   transition={{ 
-                    duration: 2,
-                    repeat: Infinity,
-                    ease: "linear",
+                    rotate: { duration: 3, repeat: Infinity, ease: "linear" },
+                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
                   }}
-                  className="absolute inset-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm"
-                />
-              </motion.div>
+                  className="relative flex items-center justify-center"
+                >
+                  <div className={`absolute rounded-full bg-primary/20 blur-xl animate-pulse ${
+                    isMobile ? 'w-16 h-16' : isTablet ? 'w-24 h-24' : 'w-32 h-32'
+                  }`} />
+                  <Radio className={`${
+                    isMobile ? 'h-12 w-12' : 
+                    isTablet ? 'h-18 w-18' : 
+                    'h-24 w-24'
+                  } text-primary relative z-10 flex-shrink-0`} />
+                  
+                  <motion.div
+                    animate={{ 
+                      y: ['-50%', '150%'],
+                    }}
+                    transition={{ 
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                    className="absolute inset-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm pointer-events-none"
+                  />
+                </motion.div>
+              </div>
             </div>
             
             <motion.h1 
@@ -261,7 +271,7 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
             </motion.h1>
             
             <motion.p 
-              className={`text-white/60 mb-6 md:mb-8 ${
+              className={`text-white/60 mb-2 md:mb-8 ${
                 isMobile ? 'text-sm' : 
                 isTablet ? 'text-base' : 
                 'text-lg'
@@ -305,11 +315,13 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
             >
               <Button
                 onClick={onPlayClick}
-                size="lg"
-                className="relative group bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white rounded-full shadow-2xl shadow-primary/30 px-8 py-6 text-lg overflow-hidden"
+                size={isMobile ? 'default' : 'lg'}
+                className={`relative group bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white rounded-full shadow-2xl shadow-primary/30 overflow-hidden ${
+                  isMobile ? 'px-6 py-4 text-base' : 'px-8 py-6 text-lg'
+                }`}
               >
                 <span className="relative z-10 flex items-center gap-2">
-                  <Play className="h-5 w-5 fill-current" />
+                  <Play className={isMobile ? 'h-4 w-4 fill-current' : 'h-5 w-5 fill-current'} />
                   Start Watching
                 </span>
                 <motion.div
@@ -327,7 +339,7 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
             </motion.div>
             
             <motion.p 
-              className="text-white/40 mt-4 text-xs"
+              className={`text-white/40 mt-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.6 }}
@@ -343,48 +355,69 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
 
 // Live Badge Component
 const LiveBadge = ({ variant = 'default', isMobile = false }: { variant?: 'default' | 'transparent', isMobile?: boolean }) => {
-  if (variant === 'transparent') {
-    return (
-      <motion.div 
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        className={`flex items-center gap-1 ${
-          isMobile ? 'px-1.5 py-0.5' : 'px-2 py-1'
-        } bg-black/40 backdrop-blur-md border border-white/20 rounded-full shadow-lg`}
-      >
-        <span className="relative flex h-2 w-2">
-          <motion.span
-            animate={{ scale: [1, 1.5, 1] }}
-            transition={{ duration: 1.5, repeat: Infinity }}
-            className="absolute inset-0 rounded-full bg-red-500"
-          />
-          <span className="relative inset-0 rounded-full h-2 w-2 bg-red-500" />
-        </span>
-        <span className={`text-white font-bold uppercase tracking-wider ${
-          isMobile ? 'text-[8px]' : 'text-[10px]'
-        }`}>LIVE</span>
-      </motion.div>
-    )
-  }
-  
+  // Component is kept for potential future use but not displayed per requirements
+  return null
+}
+
+// Program Overlay Component - Shows every 2-3 minutes
+const ProgramOverlay = ({ 
+  currentProgram, 
+  nextProgram, 
+  isVisible,
+  isMobile 
+}: { 
+  currentProgram: VideoProgram | null
+  nextProgram: VideoProgram | null
+  isVisible: boolean
+  isMobile: boolean
+}) => {
   return (
-    <motion.div 
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      className={`flex items-center gap-2 ${
-        isMobile ? 'px-2 py-0.5 text-[10px]' : 'px-3 py-1 text-xs'
-      } bg-gradient-to-r from-green-500/20 to-green-600/20 text-green-300 rounded-full border border-green-500/30 shadow-lg shadow-green-500/10`}
-    >
-      <span className="relative flex h-2 w-2">
-        <motion.span
-          animate={{ scale: [1, 1.5, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-          className="absolute inset-0 rounded-full bg-green-500"
-        />
-        <span className="relative inset-0 rounded-full h-2 w-2 bg-green-500" />
-      </span>
-      <span>LIVE</span>
-    </motion.div>
+    <AnimatePresence>
+      {isVisible && currentProgram && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.5 }}
+          className={`absolute z-30 ${
+            isMobile ? 'top-2 left-2 right-2' : 'top-4 left-4 right-1/2'
+          }`}
+        >
+          <div className={`backdrop-blur-xl bg-black/60 border border-white/10 rounded-xl ${
+            isMobile ? 'p-2' : 'p-4'
+          } shadow-2xl`}>
+            {/* Current Program */}
+            <div className="flex items-center gap-2 mb-1">
+              <span className="relative flex h-1.5 w-1.5 md:h-2 md:w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 md:h-2 md:w-2 bg-primary"></span>
+              </span>
+              <span className={`text-primary font-bold ${isMobile ? 'text-[8px]' : 'text-xs'} uppercase tracking-wider`}>
+                Now Playing
+              </span>
+            </div>
+            <h3 className={`text-white font-bold ${isMobile ? 'text-[11px] leading-tight' : 'text-lg'} line-clamp-1 mb-1 md:mb-2`}>
+              {currentProgram.title}
+            </h3>
+            
+            {/* Next Program */}
+            {nextProgram && (
+              <div className={`pt-1 md:pt-2 border-t border-white/10 ${isMobile ? 'mt-1' : 'mt-2'}`}>
+                <div className="flex items-center gap-1 md:gap-2 mb-0.5 md:mb-1">
+                  <ArrowRight className={`text-yellow-300 ${isMobile ? 'h-2 w-2' : 'h-4 w-4'}`} />
+                  <span className={`text-yellow-300 font-bold ${isMobile ? 'text-[8px]' : 'text-xs'} uppercase tracking-wider`}>
+                    Up Next
+                  </span>
+                </div>
+                <p className={`text-white/80 ${isMobile ? 'text-[10px] leading-tight' : 'text-sm'} line-clamp-1`}>
+                  {nextProgram.title}
+                </p>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
@@ -429,7 +462,7 @@ const DesktopTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }
     )
   }
 
-  const items: JSX.Element[] = []
+  const items: React.ReactElement[] = []
   const repeatCount = 40 // Very high for true 360-degree infinite loop
   
   for (let i = 0; i < repeatCount; i++) {
@@ -514,7 +547,7 @@ const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }:
     )
   }
 
-  const items: JSX.Element[] = []
+  const items: React.ReactElement[] = []
   const repeatCount = 40 // Increased for smoother infinite loop
   
   for (let i = 0; i < repeatCount; i++) {
@@ -527,9 +560,9 @@ const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }:
       if (isCurrentVideo) return;
       
       items.push(
-        <div key={`${video.id}-${i}-${index}`} className="inline-flex items-center mx-1">
+        <div key={`${video.id}-${i}-${index}`} className="inline-flex items-center mx-2">
           <span className={`
-            px-1 py-0.5 rounded-full text-[6px] font-black mr-1 whitespace-nowrap
+            px-1.5 py-0.5 rounded-full text-[8px] font-black mr-1.5 whitespace-nowrap
             ${isNextVideo 
               ? 'bg-yellow-500/30 text-yellow-300 border border-yellow-500/70 shadow-sm font-extrabold' 
               : 'bg-white/30 text-white border border-white/40 shadow-sm font-bold'
@@ -537,12 +570,12 @@ const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }:
           `}>
             {prefix}
           </span>
-          <span className={`font-black text-[8px] whitespace-nowrap tracking-wide max-w-[80px] truncate ${
+          <span className={`font-black text-[10px] whitespace-nowrap tracking-wide ${
             isNextVideo ? 'text-yellow-300 font-extrabold' : 'text-white'
           }`}>
             {video.title}
           </span>
-          <span className={`ml-1 font-mono text-[7px] font-black whitespace-nowrap ${
+          <span className={`ml-1.5 font-mono text-[9px] font-black whitespace-nowrap ${
             isNextVideo ? 'text-yellow-300' : 'text-white/80'
           }`}>
             {duration}
@@ -558,12 +591,12 @@ const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }:
       <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/95 to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/95 to-transparent z-10 pointer-events-none" />
       
-      {/* Infinite Scrolling - 360-degree never ends - Faster speed */}
+      {/* Infinite Scrolling - 360-degree never ends - Standard TV news speed */}
       <motion.div
         className="flex whitespace-nowrap"
-        animate={{ x: [0, -8000] }}
+        animate={{ x: [0, -15000] }}
         transition={{ 
-          duration: 60, 
+          duration: 180, 
           repeat: Infinity, 
           ease: "linear",
           repeatType: "loop"
@@ -623,7 +656,9 @@ export function SyncedVideoPlayer({
   initialChannelId = CHANNELS[0].id,
   onChannelChange,
   showStartModal = false,
-  onStartClick
+  onStartClick,
+  openHistoryModal = false,
+  onHistoryModalClose
 }: SyncedVideoPlayerProps) {
   // UI State
   const [showControls, setShowControls] = useState(true)
@@ -635,6 +670,8 @@ export function SyncedVideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showPreviousModal, setShowPreviousModal] = useState(false)
   const [previousVideos, setPreviousVideos] = useState<VideoProgram[]>([])
+  const [showProgramOverlay, setShowProgramOverlay] = useState(false)
+  const [mainPlayerPaused, setMainPlayerPaused] = useState(false)
   
   // Channel State
   const [channels] = useState<Channel[]>(CHANNELS)
@@ -698,6 +735,13 @@ export function SyncedVideoPlayer({
   useEffect(() => {
     setShowStartScreen(showStartModal)
   }, [showStartModal])
+
+  // Handle external openHistoryModal prop
+  useEffect(() => {
+    if (openHistoryModal && !showPreviousModal) {
+      setShowPreviousModal(true)
+    }
+  }, [openHistoryModal, showPreviousModal])
 
   // Update currentChannelId when initialChannelId changes
   useEffect(() => {
@@ -884,10 +928,77 @@ export function SyncedVideoPlayer({
       
       if (playerReady) {
         console.log('🔄 Loading new video in existing player')
-        loadVideo(program.videoId, Math.floor(startTime))
-        seekTo(startTime, true)
-        play()
-        setIsLoading(false)
+        // First destroy and reset everything
+        destroy()
+        setPlayerReady(false)
+        
+        // Small delay to ensure clean slate
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
+        // Re-initialize player with new channel
+        await initializePlayer({
+          videoId: program.videoId,
+          startSeconds: Math.floor(startTime),
+          volume: volume,
+          muted: false,
+          onReady: () => {
+            console.log('✅ Player ready after channel switch')
+            setPlayerReady(true)
+            setIsLoading(false)
+            setShowStartScreen(false) // Important: Reset start screen
+            
+            seekTo(startTime, true)
+            play()
+            
+            const duration = getDuration()
+            if (duration && duration > 0) {
+              setVideoDuration(duration)
+            }
+            
+            setYouTubeVolume(volume)
+            setYouTubeMuted(false)
+          },
+          onStateChange: (state) => {
+            if (!mountedRef.current) return
+            
+            console.log('🎬 YouTube state changed:', state)
+            
+            if (state === YT_STATE.ENDED) {
+              console.log('📺 Video ended event received - playing next')
+              if (videoEndTimeoutRef.current) {
+                clearTimeout(videoEndTimeoutRef.current)
+              }
+              playNextVideo()
+            } else if (state === YT_STATE.PLAYING) {
+              console.log('▶️ Video is now playing')
+              setShowStartScreen(false) // Ensure start screen is hidden
+            } else if (state === YT_STATE.PAUSED) {
+              console.log('⏸️ Video paused - resuming')
+              play()
+            } else if (state === YT_STATE.BUFFERING) {
+              console.log('⏳ Video buffering...')
+            } else if (state === YT_STATE.CUED) {
+              console.log('🎬 Video cued - playing')
+              play()
+            }
+          },
+          onDurationChange: (duration) => {
+            if (duration && duration > 0) {
+              console.log('📏 Video duration:', duration)
+              setVideoDuration(duration)
+            }
+          },
+          onError: (code, msg) => {
+            console.error('Player error:', code, msg)
+            if (code === 2 || code === 5 || code === 100) {
+              setApiError(`Playback error: ${msg}`)
+              setIsLoading(false)
+            } else {
+              console.log('⚠️ Non-critical error, continuing playback')
+              setIsLoading(false)
+            }
+          }
+        })
       } else {
         await initializePlayer({
           videoId: program.videoId,
@@ -998,14 +1109,16 @@ export function SyncedVideoPlayer({
       const offset = result.serverTimestamp - Date.now()
       setServerTimeOffset(offset)
       
-      // Only update upcoming videos, don't interrupt current playback
-      const programs = getChannelPrograms(currentChannelId)
-      const upcoming: VideoProgram[] = []
-      for (let i = 1; i <= 15; i++) {
-        const nextIndex = (result.data.programIndex + i) % programs.length
-        upcoming.push(programs[nextIndex])
+      // Replace upcoming videos entirely with server data
+      if (result.data.upcomingVideos && Array.isArray(result.data.upcomingVideos)) {
+        console.log('📋 Replacing upcoming videos with server data:', result.data.upcomingVideos.length, 'videos')
+        setUpcomingVideos(result.data.upcomingVideos)
       }
-      setUpcomingVideos(upcoming)
+      
+      // Update next program info (but don't change current playback)
+      if (result.data.nextProgram) {
+        setNextProgram(result.data.nextProgram)
+      }
       
     } catch (error) {
       console.error('Sync failed:', error)
@@ -1132,6 +1245,33 @@ export function SyncedVideoPlayer({
     }
   }, [playerReady, syncWithServer])
 
+  // Program Overlay - Shows every 2-3 minutes for a few seconds
+  useEffect(() => {
+    if (!playerReady || !currentProgram || showStartScreen) return
+    
+    // Show overlay every 2.5 minutes (150 seconds)
+    const overlayInterval = setInterval(() => {
+      setShowProgramOverlay(true)
+      // Hide after 5 seconds
+      setTimeout(() => {
+        setShowProgramOverlay(false)
+      }, 5000)
+    }, 150000) // 2.5 minutes
+    
+    // Show initial overlay after 10 seconds
+    const initialTimeout = setTimeout(() => {
+      setShowProgramOverlay(true)
+      setTimeout(() => {
+        setShowProgramOverlay(false)
+      }, 5000)
+    }, 10000)
+    
+    return () => {
+      clearInterval(overlayInterval)
+      clearTimeout(initialTimeout)
+    }
+  }, [playerReady, currentProgram, showStartScreen])
+
   // Cleanup
   useEffect(() => {
     mountedRef.current = true
@@ -1210,33 +1350,15 @@ export function SyncedVideoPlayer({
       }`}>
         <div 
           ref={playerRef}
-          className={`relative w-full aspect-video bg-black/50 backdrop-blur-sm overflow-hidden shadow-2xl border border-white/10 transition-all duration-300 ${
-            isFullscreen ? 'rounded-none border-0' : 'rounded-2xl md:rounded-3xl'
+          className={`relative w-full aspect-video bg-black/50 backdrop-blur-sm overflow-hidden shadow-2xl border border-white/10 border-b-0 transition-all duration-300 ${
+            isFullscreen ? 'rounded-none border-0' : 'rounded-t-2xl md:rounded-t-3xl rounded-b-none'
           }`}
         >
           {/* YouTube iframe container */}
           <div ref={youtubeContainerRef} className="absolute inset-0 w-full h-full" />
           <div className="absolute inset-0 w-full h-full pointer-events-auto" />
           
-          {/* Time Display */}
-          {!showStartScreen && playerReady && !isLoading && !apiError && (
-            isMobile ? (
-              <motion.div 
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="absolute top-2 right-2 z-40"
-              >
-                <div className="flex items-center gap-1.5 px-2 py-1 bg-black/60 backdrop-blur-xl rounded-lg border border-white/10 shadow-lg">
-                  <Clock className="h-2.5 w-2.5 text-primary" />
-                  <span className="text-white font-medium text-[9px] tracking-wide">
-                    {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                  </span>
-                </div>
-              </motion.div>
-            ) : (
-              <ModernTimeDisplay />
-            )
-          )}
+          {/* Time/Date Display REMOVED - per requirements */}
           
           {/* START SCREEN */}
           {showStartScreen && !isLoading && !apiError && (
@@ -1249,28 +1371,30 @@ export function SyncedVideoPlayer({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-xl z-40"
+              className="absolute inset-0 flex items-center justify-center bg-black/90 backdrop-blur-xl z-40 p-4"
             >
-              <div className="text-center">
-                <div className="relative mb-8">
+              <div className="text-center w-full max-w-xs mx-auto">
+                <div className={`relative flex items-center justify-center mb-6 ${
+                  isMobile ? 'w-20 h-20' : 'w-24 h-24'
+                } mx-auto`}>
                   <motion.div
                     animate={{ rotate: 360 }}
                     transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="relative inline-block"
+                    className="relative flex items-center justify-center w-full h-full"
                   >
                     <div className="absolute inset-0 rounded-full border-4 border-primary/30" />
                     <div className="absolute inset-0 rounded-full border-t-4 border-primary animate-spin" />
                     <motion.div
-                      animate={{ scale: [1, 1.2, 1] }}
+                      animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-                      className="relative"
+                      className="relative flex items-center justify-center"
                     >
-                      <Tv className="h-16 w-16 text-primary relative z-10" />
+                      <Tv className={`${isMobile ? 'h-10 w-10' : 'h-12 w-12'} text-primary relative z-10`} />
                     </motion.div>
                     <motion.div
                       animate={{ y: ['-100%', '200%'] }}
                       transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                      className="absolute inset-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-sm"
+                      className="absolute inset-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/30 to-transparent blur-sm pointer-events-none"
                     />
                   </motion.div>
                 </div>
@@ -1279,7 +1403,7 @@ export function SyncedVideoPlayer({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
-                  className="text-white text-lg mb-2 font-medium"
+                  className={`text-white ${isMobile ? 'text-base' : 'text-lg'} mb-2 font-medium`}
                 >
                   Tuning into your broadcast...
                 </motion.p>
@@ -1288,7 +1412,7 @@ export function SyncedVideoPlayer({
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="text-white/60 text-sm"
+                  className={`text-white/60 ${isMobile ? 'text-xs' : 'text-sm'}`}
                 >
                   Please wait while we connect
                 </motion.p>
@@ -1350,62 +1474,15 @@ export function SyncedVideoPlayer({
           {/* Player UI */}
           {!showStartScreen && !isLoading && !apiError && playerReady && currentProgram && (
             <>
-              {/* TOP LEFT SECTION - Desktop - Always visible */}
-              {!isMobile && (
-                <div className="absolute top-4 left-4 z-40">
-                  <div className="flex items-center gap-3">
-                    <LiveBadge isMobile={isMobile} />
-                    <div className="flex flex-col">
-                      <h2 className="text-white font-bold text-lg line-clamp-1">
-                        {currentProgram.title}
-                      </h2>
-                      <p className="text-white/60 text-sm">
-                        {currentProgram.category || 'Program'} • {cycleInfo.current}/{cycleInfo.total} • {
-                          channels.find(c => c.id === currentChannelId)?.name
-                        }
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TOP LEFT SECTION - Mobile - LIVE badge always visible, title only when controls visible */}
-              {isMobile && (
-                <>
-                  {/* LIVE Badge - Always visible */}
-                  <div className="absolute top-2 left-2 z-40">
-                    <LiveBadge isMobile={true} />
-                  </div>
-                  
-                  {/* Title and Info - Only when controls visible */}
-                  <AnimatePresence>
-                    {controlsVisible && (
-                      <motion.div 
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute top-8 left-2 right-16 z-40"
-                      >
-                        <div className="flex items-start gap-1.5">
-                          <div className="flex flex-col">
-                            <h2 className="text-white font-bold text-xs line-clamp-1">
-                              {currentProgram.title}
-                            </h2>
-                            <div className="flex items-center gap-1">
-                              <span className="text-white/60 text-[8px] whitespace-nowrap">
-                                {currentProgram.category || 'Program'} • {cycleInfo.current}/{cycleInfo.total} • {
-                                  channels.find(c => c.id === currentChannelId)?.name
-                                }
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </>
-              )}
+              {/* TOP LEFT SECTION - REMOVED per requirements (no Live badge, title, date/time) */}
+              
+              {/* Program Overlay - Shows every 2-3 minutes */}
+              <ProgramOverlay
+                currentProgram={currentProgram}
+                nextProgram={nextProgram}
+                isVisible={showProgramOverlay}
+                isMobile={isMobile}
+              />
 
               {/* BOTTOM TICKER - 360-degree infinite scroll, bold text */}
               {showTicker && (
@@ -1504,99 +1581,88 @@ export function SyncedVideoPlayer({
                   </div>
                 </motion.div>
               )}
-
-              {/* Bottom Controls */}
-              <AnimatePresence>
-                {controlsVisible && showControls && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 50 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 50 }}
-                    transition={{ type: "spring", damping: 20 }}
-                    className={`absolute left-0 right-0 z-50 
-  ${showTicker ? 'bottom-10 md:bottom-16' : 'bottom-10 md:bottom-0'}`}
-                  >
-                    <div className="bg-gradient-to-t from-black/90 via-black/80 to-transparent backdrop-blur-sm pt-4 md:pt-8">
-                      <div className={`bg-black/40 backdrop-blur-xl border-t border-white/10 ${
-                        isMobile ? 'px-3 py-2' : 'px-6 py-4'
-                      }`}>
-                        <div className="flex items-center justify-between gap-2 md:gap-4">
-                          {/* Volume Control - Mobile has bigger progress bar */}
-                          <motion.div 
-                            whileHover={{ scale: 1.02 }}
-                            className={`flex items-center gap-2 md:gap-3 ${
-                              isMobile ? 'flex-1 max-w-[120px]' : 'flex-1 max-w-xs'
-                            } bg-white/10 backdrop-blur-sm rounded-full px-2 py-1.5 md:px-3 md:py-2 border border-white/20`}
-                          >
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              onClick={toggleMute} 
-                              className={`text-white/90 hover:bg-white/20 rounded-full ${
-                                isMobile ? 'h-7 w-7' : 'h-9 w-9'
-                              }`}
-                            >
-                              {getVolumeIcon()}
-                            </Button>
-                            <div className="flex-1 relative">
-                              {showVolumeTooltip && (
-                                <motion.div 
-                                  initial={{ opacity: 0, y: 10 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  className={`absolute -top-8 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-sm text-white ${
-                                    isMobile ? 'text-[10px] px-2 py-1' : 'text-xs px-3 py-1.5'
-                                  } rounded-full border border-white/10 shadow-lg whitespace-nowrap`}
-                                >
-                                  {volume}%
-                                </motion.div>
-                              )}
-                              <Slider 
-                                value={[volume]} 
-                                onValueChange={handleVolumeChange} 
-                                max={100} 
-                                step={1} 
-                                className="[&_[role=slider]]:bg-primary [&_[role=slider]]:border-2 [&_[role=slider]]:border-white/20"
-                              />
-                            </div>
-                          </motion.div>
-
-                          {/* Action Buttons - Mobile and Desktop */}
-                          <div className="flex items-center gap-1 md:gap-2">
-                            {[
-                              { icon: Globe, onClick: handleOpenChannelSelector, title: 'Change Channel' },
-                              { icon: showTicker ? EyeOff : Eye, onClick: () => setShowTicker(!showTicker), title: showTicker ? 'Hide Ticker' : 'Show Ticker' },
-                              { icon: RefreshCw, onClick: handleReload, title: 'Reload' },
-                              { icon: History, onClick: () => setShowPreviousModal(true), title: 'Previously Watched' },
-                              { icon: MoreHorizontal, onClick: onMenuOpen, title: 'Menu' },
-                            ].map((item, index) => (
-                              <motion.div
-                                key={index}
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={item.onClick}
-                                  className={`text-white/90 hover:bg-white/20 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 ${
-                                    isMobile ? 'h-7 w-7' : 'h-10 w-10'
-                                  }`}
-                                  title={item.title}
-                                >
-                                  <item.icon className={isMobile ? 'h-3.5 w-3.5' : 'h-5 w-5'} />
-                                </Button>
-                              </motion.div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </>
           )}
         </div>
+
+        {/* Bottom Controls - OUTSIDE video frame - ALWAYS VISIBLE - Unified with iframe */}
+        {!showStartScreen && !isLoading && !apiError && playerReady && currentProgram && (
+          <div className="w-full">
+                <div className={`bg-black/60 backdrop-blur-xl border border-white/10 border-t-0 rounded-b-2xl md:rounded-b-3xl ${
+                  isMobile ? 'px-3 py-2' : 'px-6 py-4'
+                }`}>
+                  <div className="flex items-center justify-between gap-2 md:gap-4">
+                    {/* Volume Control */}
+                    <motion.div 
+                      whileHover={{ scale: 1.02 }}
+                      className={`flex items-center gap-2 md:gap-3 ${
+                        isMobile ? 'flex-1 max-w-[140px]' : 'flex-1 max-w-xs'
+                      } bg-white/10 backdrop-blur-sm rounded-full px-2 py-1 md:px-3 md:py-2 border border-white/20`}
+                    >
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={toggleMute} 
+                        className={`text-white/90 hover:bg-white/20 rounded-full ${
+                          isMobile ? 'h-7 w-7' : 'h-9 w-9'
+                        }`}
+                      >
+                        {getVolumeIcon()}
+                      </Button>
+                      <div className="flex-1 relative">
+                        {showVolumeTooltip && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={`absolute -top-8 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-sm text-white ${
+                              isMobile ? 'text-[10px] px-2 py-1' : 'text-xs px-3 py-1.5'
+                            } rounded-full border border-white/10 shadow-lg whitespace-nowrap`}
+                          >
+                            {volume}%
+                          </motion.div>
+                        )}
+                        <Slider 
+                          value={[volume]} 
+                          onValueChange={handleVolumeChange} 
+                          max={100} 
+                          step={1} 
+                          className="h-2 [&_[role=slider]]:bg-primary [&_[role=slider]]:border-2 [&_[role=slider]]:border-white/20 [&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
+                        />
+                      </div>
+                    </motion.div>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-1 md:gap-2">
+                      {[
+                        { icon: Globe, onClick: handleOpenChannelSelector, title: 'Change Channel' },
+                        { icon: showTicker ? EyeOff : Eye, onClick: () => setShowTicker(!showTicker), title: showTicker ? 'Hide Ticker' : 'Show Ticker' },
+                        { icon: RefreshCw, onClick: handleReload, title: 'Reload' },
+                        { icon: History, onClick: () => setShowPreviousModal(true), title: 'Previously Watched' },
+                        { icon: MoreHorizontal, onClick: onMenuOpen, title: 'Menu' },
+                      ].map((item, index) => (
+                        <motion.div
+                          key={index}
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={item.onClick}
+                            className={`text-white/90 hover:bg-white/20 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 ${
+                              isMobile ? 'h-7 w-7' : 'h-10 w-10'
+                            }`}
+                            title={item.title}
+                          >
+                            <item.icon className={isMobile ? 'h-3.5 w-3.5' : 'h-5 w-5'} />
+                          </Button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+        )}
 
         {/* Program Info Section - REMOVED to match web style (no extra content below iframe) */}
       </div>
@@ -1610,13 +1676,27 @@ export function SyncedVideoPlayer({
         currentChannelId={currentChannelId}
       />
 
-      {/* Previous Videos Modal - Fixed duration display issue */}
+      {/* Previous Videos Modal - Pause main player when watching */}
       <PreviousVideosModal
         isOpen={showPreviousModal}
-        onClose={() => setShowPreviousModal(false)}
+        onClose={() => {
+          setShowPreviousModal(false)
+          onHistoryModalClose?.()
+        }}
         videos={previousVideos}
         onPlayVideo={handlePlayFromPrevious}
         currentChannelId={currentChannelId}
+        onPauseMainPlayer={() => {
+          // Destroy main player when watching from history
+          destroy()
+          setMainPlayerPaused(true)
+        }}
+        onResumeMainPlayer={() => {
+          // Show start screen to restart live
+          setMainPlayerPaused(false)
+          setShowStartScreen(true)
+          setPlayerReady(false)
+        }}
       />
     </div>
   )
