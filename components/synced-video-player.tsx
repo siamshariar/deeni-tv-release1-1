@@ -397,7 +397,7 @@ const DeeniLogo = ({ isMobile = false }: { isMobile?: boolean }) => {
       className="flex items-center"
     >
       <span className={`font-bold ${
-        isMobile ? 'text-sm' : 'text-2xl'
+        isMobile ? 'text-xs' : 'text-2xl'
       } text-white tracking-tight`}>
         Deeni<span className="text-primary font-bold">.tv</span>
       </span>
@@ -491,7 +491,7 @@ const DesktopTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }
   )
 }
 
-// Mobile Ticker Component - Enhanced, more items visible
+// Mobile Ticker Component - Ultra compact with more items
 const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }: { 
   videos: VideoProgram[], 
   currentIndex: number,
@@ -515,7 +515,7 @@ const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }:
   }
 
   const items: JSX.Element[] = []
-  const repeatCount = 30 // Very high for true 360-degree infinite loop
+  const repeatCount = 40 // Increased for smoother infinite loop
   
   for (let i = 0; i < repeatCount; i++) {
     videos.forEach((video, index) => {
@@ -527,9 +527,9 @@ const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }:
       if (isCurrentVideo) return;
       
       items.push(
-        <div key={`${video.id}-${i}-${index}`} className="inline-flex items-center mx-2">
+        <div key={`${video.id}-${i}-${index}`} className="inline-flex items-center mx-1">
           <span className={`
-            px-1.5 py-0.5 rounded-full text-[9px] font-black mr-1.5 whitespace-nowrap
+            px-1 py-0.5 rounded-full text-[6px] font-black mr-1 whitespace-nowrap
             ${isNextVideo 
               ? 'bg-yellow-500/30 text-yellow-300 border border-yellow-500/70 shadow-sm font-extrabold' 
               : 'bg-white/30 text-white border border-white/40 shadow-sm font-bold'
@@ -537,12 +537,12 @@ const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }:
           `}>
             {prefix}
           </span>
-          <span className={`font-black text-[11px] whitespace-nowrap tracking-wide ${
+          <span className={`font-black text-[8px] whitespace-nowrap tracking-wide max-w-[80px] truncate ${
             isNextVideo ? 'text-yellow-300 font-extrabold' : 'text-white'
           }`}>
             {video.title}
           </span>
-          <span className={`ml-1.5 font-mono text-[10px] font-black whitespace-nowrap ${
+          <span className={`ml-1 font-mono text-[7px] font-black whitespace-nowrap ${
             isNextVideo ? 'text-yellow-300' : 'text-white/80'
           }`}>
             {duration}
@@ -554,16 +554,16 @@ const MobileTicker = ({ videos, currentIndex, totalPrograms, currentProgramId }:
 
   return (
     <div className="relative flex overflow-hidden h-full items-center">
-      {/* Gradient Fades */}
-      <div className="absolute left-0 top-0 bottom-0 w-10 bg-gradient-to-r from-black/95 to-transparent z-10 pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-10 bg-gradient-to-l from-black/95 to-transparent z-10 pointer-events-none" />
+      {/* Gradient Fades - Smaller on mobile */}
+      <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/95 to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-black/95 to-transparent z-10 pointer-events-none" />
       
-      {/* Infinite Scrolling - 360-degree never ends */}
+      {/* Infinite Scrolling - 360-degree never ends - Faster speed */}
       <motion.div
         className="flex whitespace-nowrap"
-        animate={{ x: [0, -10000] }}
+        animate={{ x: [0, -8000] }}
         transition={{ 
-          duration: 100, 
+          duration: 60, 
           repeat: Infinity, 
           ease: "linear",
           repeatType: "loop"
@@ -1350,7 +1350,7 @@ export function SyncedVideoPlayer({
           {/* Player UI */}
           {!showStartScreen && !isLoading && !apiError && playerReady && currentProgram && (
             <>
-              {/* TOP LEFT SECTION - Desktop only - Matches web style */}
+              {/* TOP LEFT SECTION - Desktop - Always visible */}
               {!isMobile && (
                 <div className="absolute top-4 left-4 z-40">
                   <div className="flex items-center gap-3">
@@ -1369,23 +1369,42 @@ export function SyncedVideoPlayer({
                 </div>
               )}
 
-              {/* Mobile Title - Matches web style without background */}
+              {/* TOP LEFT SECTION - Mobile - LIVE badge always visible, title only when controls visible */}
               {isMobile && (
-                <motion.div 
-                  initial={{ y: -20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  className="absolute top-2 left-2 z-40 max-w-[60%]"
-                >
-                  <div className="flex items-center gap-1.5">
-                    <LiveBadge variant="transparent" isMobile={true} />
-                    <h2 className="text-white font-bold text-xs line-clamp-1">
-                      {currentProgram.title}
-                    </h2>
-                    <span className="text-white/40 text-[8px] ml-1">
-                      {cycleInfo.current}/{cycleInfo.total}
-                    </span>
+                <>
+                  {/* LIVE Badge - Always visible */}
+                  <div className="absolute top-2 left-2 z-40">
+                    <LiveBadge isMobile={true} />
                   </div>
-                </motion.div>
+                  
+                  {/* Title and Info - Only when controls visible */}
+                  <AnimatePresence>
+                    {controlsVisible && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="absolute top-8 left-2 right-16 z-40"
+                      >
+                        <div className="flex items-start gap-1.5">
+                          <div className="flex flex-col">
+                            <h2 className="text-white font-bold text-xs line-clamp-1">
+                              {currentProgram.title}
+                            </h2>
+                            <div className="flex items-center gap-1">
+                              <span className="text-white/60 text-[8px] whitespace-nowrap">
+                                {currentProgram.category || 'Program'} • {cycleInfo.current}/{cycleInfo.total} • {
+                                  channels.find(c => c.id === currentChannelId)?.name
+                                }
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
               )}
 
               {/* BOTTOM TICKER - 360-degree infinite scroll, bold text */}
@@ -1397,7 +1416,7 @@ export function SyncedVideoPlayer({
                   className="absolute bottom-0 left-0 right-0 z-30"
                 >
                   <div className={`relative overflow-hidden bg-gradient-to-r from-black/95 via-black/90 to-black/95 backdrop-blur-xl border-t border-white/10 ${
-                    isMobile ? 'h-14' : 'h-20'
+                    isMobile ? 'h-10' : 'h-20'
                   }`}>
                     <div className="relative h-full flex items-center px-2 md:px-4">
                       {/* Left Section - Deeni.tv Logo */}
@@ -1435,8 +1454,8 @@ export function SyncedVideoPlayer({
                               </div>
                             )}
                             
-                            {/* Previous Videos Button */}
-                            <Button
+                            {/* Previous Videos Button - Desktop */}
+                            {/* <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => setShowPreviousModal(true)}
@@ -1444,15 +1463,16 @@ export function SyncedVideoPlayer({
                               title="Previously Watched"
                             >
                               <History className="h-4 w-4" />
-                            </Button>
+                            </Button> */}
                           </div>
                         </>
                       )}
                       
-                      {/* Mobile Ticker - 360-degree infinite scroll, bold text */}
+                      {/* Mobile Ticker - Ultra compact with more items */}
                       {isMobile && (
                         <>
-                          <div className="flex-1 min-w-0 overflow-hidden ml-2">
+                          {/* Ticker takes most of the width */}
+                          <div className="flex-1 min-w-0 overflow-hidden ml-1">
                             <MobileTicker 
                               videos={upcomingVideos} 
                               currentIndex={cycleInfo.current - 1}
@@ -1461,23 +1481,22 @@ export function SyncedVideoPlayer({
                             />
                           </div>
                           
-                          {/* Mobile Time - Compact */}
-                          <div className="flex items-center gap-1 ml-1 flex-shrink-0">
-                            <div className="flex items-center gap-0.5 px-1.5 py-1 bg-black/70 backdrop-blur-sm rounded border border-white/20">
-                              <Clock className="h-2.5 w-2.5 text-primary" />
-                              <span className="text-white font-black text-[9px] whitespace-nowrap">
+                          {/* Compact time display - Combined current and next */}
+                          <div className="flex items-center gap-0 ml-1 flex-shrink-0">
+                            <div className="flex items-center gap-0.5 px-1 py-0.5 bg-black/70 backdrop-blur-sm rounded-l border border-white/20">
+                              <Clock className="h-2 w-2 text-primary" />
+                              <span className="text-white font-black text-[7px] whitespace-nowrap">
                                 {displayTime}
                               </span>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setShowPreviousModal(true)}
-                              className="text-white/90 hover:bg-white/20 rounded-full bg-black/70 backdrop-blur-sm border border-white/20 h-6 w-6"
-                              title="Previously Watched"
-                            >
-                              <History className="h-3 w-3" />
-                            </Button>
+                            {nextProgram && (
+                              <div className="flex items-center gap-0.5 px-1 py-0.5 bg-yellow-500/20 backdrop-blur-sm rounded-r border border-yellow-500/30 border-l-0">
+                                <ArrowRight className="h-2 w-2 text-yellow-300" />
+                                <span className="text-yellow-300 font-black text-[7px] whitespace-nowrap">
+                                  {formatTime(nextProgram.duration)}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </>
                       )}
@@ -1494,31 +1513,32 @@ export function SyncedVideoPlayer({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 50 }}
                     transition={{ type: "spring", damping: 20 }}
-                    className={`absolute ${showTicker ? 'bottom-14' : 'bottom-0'} left-0 right-0 z-50`}
+                    className={`absolute left-0 right-0 z-50 
+  ${showTicker ? 'bottom-10 md:bottom-16' : 'bottom-10 md:bottom-0'}`}
                   >
                     <div className="bg-gradient-to-t from-black/90 via-black/80 to-transparent backdrop-blur-sm pt-4 md:pt-8">
                       <div className={`bg-black/40 backdrop-blur-xl border-t border-white/10 ${
-                        isMobile ? 'px-2 py-1' : 'px-6 py-4'
+                        isMobile ? 'px-3 py-2' : 'px-6 py-4'
                       }`}>
                         <div className="flex items-center justify-between gap-2 md:gap-4">
-                          {/* Volume Control */}
+                          {/* Volume Control - Mobile has bigger progress bar */}
                           <motion.div 
                             whileHover={{ scale: 1.02 }}
-                            className={`flex items-center gap-2 md:gap-3 flex-1 ${
-                              isMobile ? 'max-w-[80px]' : 'max-w-xs'
-                            } bg-white/10 backdrop-blur-sm rounded-full px-2 py-1 md:px-3 md:py-2 border border-white/20`}
+                            className={`flex items-center gap-2 md:gap-3 ${
+                              isMobile ? 'flex-1 max-w-[120px]' : 'flex-1 max-w-xs'
+                            } bg-white/10 backdrop-blur-sm rounded-full px-2 py-1.5 md:px-3 md:py-2 border border-white/20`}
                           >
                             <Button 
                               variant="ghost" 
                               size="icon" 
                               onClick={toggleMute} 
                               className={`text-white/90 hover:bg-white/20 rounded-full ${
-                                isMobile ? 'h-6 w-6' : 'h-9 w-9'
+                                isMobile ? 'h-7 w-7' : 'h-9 w-9'
                               }`}
                             >
                               {getVolumeIcon()}
                             </Button>
-                            <div className="flex-1 relative hidden sm:block">
+                            <div className="flex-1 relative">
                               {showVolumeTooltip && (
                                 <motion.div 
                                   initial={{ opacity: 0, y: 10 }}
@@ -1540,12 +1560,13 @@ export function SyncedVideoPlayer({
                             </div>
                           </motion.div>
 
-                          {/* Action Buttons */}
+                          {/* Action Buttons - Mobile and Desktop */}
                           <div className="flex items-center gap-1 md:gap-2">
                             {[
                               { icon: Globe, onClick: handleOpenChannelSelector, title: 'Change Channel' },
                               { icon: showTicker ? EyeOff : Eye, onClick: () => setShowTicker(!showTicker), title: showTicker ? 'Hide Ticker' : 'Show Ticker' },
                               { icon: RefreshCw, onClick: handleReload, title: 'Reload' },
+                              { icon: History, onClick: () => setShowPreviousModal(true), title: 'Previously Watched' },
                               { icon: MoreHorizontal, onClick: onMenuOpen, title: 'Menu' },
                             ].map((item, index) => (
                               <motion.div
@@ -1589,7 +1610,7 @@ export function SyncedVideoPlayer({
         currentChannelId={currentChannelId}
       />
 
-      {/* Previous Videos Modal */}
+      {/* Previous Videos Modal - Fixed duration display issue */}
       <PreviousVideosModal
         isOpen={showPreviousModal}
         onClose={() => setShowPreviousModal(false)}
