@@ -192,13 +192,14 @@ function ScrollingUpcomingVideos({ videos }: { videos: VideoProgram[] }) {
   }
 
   // Create a repeating sequence of upcoming videos for continuous scrolling
-  const scrollingItems: string[] = []
+  // Each item stores both text and whether it's the first "NEXT" video
+  const scrollingItems: { text: string; isNext: boolean }[] = []
   for (let i = 0; i < 6; i++) { // Repeat 6 times for smooth scrolling
     videos.forEach((video, index) => {
       if (index === 0) {
-        scrollingItems.push(`NEXT: ${video.title} • ${formatDuration(video.duration)}`)
+        scrollingItems.push({ text: `▶ NEXT: ${video.title} • ${formatDuration(video.duration)}`, isNext: true })
       } else {
-        scrollingItems.push(`UP NEXT: ${video.title} • ${formatDuration(video.duration)}`)
+        scrollingItems.push({ text: `UP NEXT: ${video.title} • ${formatDuration(video.duration)}`, isNext: false })
       }
     })
   }
@@ -208,22 +209,36 @@ function ScrollingUpcomingVideos({ videos }: { videos: VideoProgram[] }) {
       <motion.div
         className="flex whitespace-nowrap"
         animate={{
-          x: [0, -2000], // Move further to accommodate more content
+          x: [0, -4000], // Move further to accommodate more content
         }}
         transition={{
-          duration: 30, // Slower for better readability
+          duration: 60, // Slower for better readability
           repeat: Infinity,
           ease: "linear",
         }}
       >
         {scrollingItems.map((item, index) => (
-          <span key={index} className="text-primary font-semibold text-sm px-4">
-            {item}
+          <span 
+            key={index} 
+            className={`px-4 whitespace-nowrap ${
+              item.isNext 
+                ? 'text-yellow-300 font-black text-base bg-gradient-to-r from-yellow-500/20 via-yellow-400/10 to-transparent px-6 py-1 rounded-full border border-yellow-400/30' 
+                : 'text-primary/80 font-semibold text-sm'
+            }`}
+          >
+            {item.text}
           </span>
         ))}
         {scrollingItems.map((item, index) => (
-          <span key={`repeat-${index}`} className="text-primary font-semibold text-sm px-4">
-            {item}
+          <span 
+            key={`repeat-${index}`} 
+            className={`px-4 whitespace-nowrap ${
+              item.isNext 
+                ? 'text-yellow-300 font-black text-base bg-gradient-to-r from-yellow-500/20 via-yellow-400/10 to-transparent px-6 py-1 rounded-full border border-yellow-400/30' 
+                : 'text-primary/80 font-semibold text-sm'
+            }`}
+          >
+            {item.text}
           </span>
         ))}
       </motion.div>

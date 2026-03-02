@@ -13,11 +13,13 @@ export default function Home() {
   const [activeChannelId, setActiveChannelId] = useState<string>('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isChannelSelectorOpen, setIsChannelSelectorOpen] = useState(false)
+  const [isFirstTimeUser, setIsFirstTimeUser] = useState(false)
   const [activeModal, setActiveModal] = useState<'schedule' | 'about' | null>(null)
   const [currentProgramId, setCurrentProgramId] = useState<string>('')
   const [isLoading, setIsLoading] = useState(true)
   const [hasUserInteracted, setHasUserInteracted] = useState(false)
   const [showStartModal, setShowStartModal] = useState(false)
+  const [openHistoryModal, setOpenHistoryModal] = useState(false)
 
   // Check localStorage for saved channel on initial load
   useEffect(() => {
@@ -25,10 +27,12 @@ export default function Home() {
     if (savedChannel && CHANNELS.some(c => c.id === savedChannel)) {
       setActiveChannelId(savedChannel)
       setHasUserInteracted(true)
+      setIsFirstTimeUser(false)
       // If channel exists, show start modal
       setShowStartModal(true)
     } else {
-      // First time user - show channel selector immediately
+      // First time user - show channel selector immediately (must select)
+      setIsFirstTimeUser(true)
       setIsChannelSelectorOpen(true)
     }
     setIsLoading(false)
@@ -61,6 +65,7 @@ export default function Home() {
     setActiveChannelId(channelId)
     saveChannel(channelId)
     setHasUserInteracted(true)
+    setIsFirstTimeUser(false)
     setIsChannelSelectorOpen(false)
     
     // After channel selection, show start modal
@@ -74,12 +79,18 @@ export default function Home() {
     // The video player will handle the actual playback
   }
 
-  const handleMenuOptionSelect = (option: 'language' | 'schedule' | 'about') => {
+  const handleMenuOptionSelect = (option: 'language' | 'schedule' | 'about' | 'history') => {
     setIsMenuOpen(false)
     
     if (option === 'language') {
       setTimeout(() => {
+        setIsFirstTimeUser(false) // Not first time when opening from menu
         setIsChannelSelectorOpen(true)
+      }, 300)
+    } else if (option === 'history') {
+      // Open history modal in the player
+      setTimeout(() => {
+        setOpenHistoryModal(true)
       }, 300)
     } else {
       setTimeout(() => {
@@ -90,6 +101,14 @@ export default function Home() {
 
   const handleCloseModal = () => {
     setActiveModal(null)
+  }
+
+  const handleCloseChannelSelector = () => {
+    // If first time user closes without selecting, don't allow
+    if (isFirstTimeUser && !activeChannelId) {
+      return // Do nothing, must select
+    }
+    setIsChannelSelectorOpen(false)
   }
 
   // If still loading initial state, show minimal loading
@@ -116,6 +135,8 @@ export default function Home() {
         onChannelChange={setActiveChannelId}
         showStartModal={showStartModal}
         onStartClick={handleStartClick}
+        openHistoryModal={openHistoryModal}
+        onHistoryModalClose={() => setOpenHistoryModal(false)}
       />
       
       {/* Menu Drawer - Slides from bottom */}
@@ -128,20 +149,11 @@ export default function Home() {
       {/* Channel/Language Selector */}
       <ChannelSelector
         isOpen={isChannelSelectorOpen}
-        onClose={() => {
-          setIsChannelSelectorOpen(false)
-          // If user closes without selecting and no channel exists, set default
-          if (!activeChannelId) {
-            const defaultChannel = CHANNELS[0].id
-            setActiveChannelId(defaultChannel)
-            saveChannel(defaultChannel)
-            setHasUserInteracted(true)
-            setShowStartModal(true)
-          }
-        }}
+        onClose={handleCloseChannelSelector}
         channels={CHANNELS}
         onSelectChannel={handleSelectChannel}
         currentChannelId={activeChannelId}
+        isFirstTime={isFirstTimeUser}
       />
       
       {/* Modals */}

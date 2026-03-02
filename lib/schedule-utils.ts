@@ -1,61 +1,185 @@
 import { VideoProgram, CurrentVideoData, Channel } from '@/types/schedule'
 
-// Bengali Channel - Dr. Abdullah Jahangir videos
+// Bengali Channel - Updated API data
 const BENGALI_VIDEOS: VideoProgram[] = [
+  // Current Program
   {
     id: 'b1',
-    videoId: 'BPf0rhGKM-Q',
-    title: 'হৃদয় স্পর্শ করার মত কিছু কথা',
-    description: 'ড. আব্দুল্লাহ জাহাঙ্গীর এর হৃদয়স্পর্শী আলোচনা',
-    duration: 5820,
+    videoId: 'wlTnG3PvBG8',
+    title: 'জুমুআর খুতবাহ্‌ - আল্লাহ কোথায় ? ।। Dr. Imam Hossain',
+    description: 'জুমুআর খুতবাহ্‌ - আল্লাহ কোথায় - Dr. Imam Hossain এর আলোচনা',
+    duration: 3633,
     category: 'Lecture',
     language: 'Bengali',
     channelId: 'bangla-1',
-    thumbnail: 'https://img.youtube.com/vi/BPf0rhGKM-Q/maxresdefault.jpg'
+    thumbnail: 'https://img.youtube.com/vi/wlTnG3PvBG8/maxresdefault.jpg'
   },
+  // Previous Programs
   {
     id: 'b2',
-    videoId: 'fXSwr_njN5U',
-    title: 'Ramadan Guide – রমজান পূর্ব প্রস্তুতি',
-    description: 'রমজানের প্রস্তুতি সম্পর্কে ড. আব্দুল্লাহ জাহাঙ্গীর এর আলোচনা',
-    duration: 1494,
+    videoId: 'hABN2uy36v8',
+    title: 'হিজরতের বিবেক জাগানিয়া শিক্ষা: ঈমান প্রশ্নে আপস নয়',
+    description: 'হিজরতের বিবেক জাগানিয়া শিক্ষা সম্পর্কে আলোচনা',
+    duration: 1800,
     category: 'Lecture',
     language: 'Bengali',
     channelId: 'bangla-1',
-    thumbnail: 'https://img.youtube.com/vi/fXSwr_njN5U/maxresdefault.jpg'
+    thumbnail: 'https://img.youtube.com/vi/hABN2uy36v8/maxresdefault.jpg'
   },
   {
     id: 'b3',
-    videoId: 'MsyOd9nnXRM',
-    title: 'Ramadan FAQs – রামাদান প্রশ্নোত্তর',
-    description: 'রমজান সম্পর্কিত সাধারণ জিজ্ঞাসার উত্তর',
-    duration: 1023,
+    videoId: 'NTtDNHKr-zk',
+    title: 'বর্তমান আলেম সমাজের অবস্থা আমাদের করণীয়- ড. খোন্দকার আব্দুল্লাহ জাহাঙ্গীর রাহিমাহুল্লাহ',
+    description: 'বর্তমান আলেম সমাজের অবস্থা সম্পর্কে ড. খোন্দকার আব্দুল্লাহ জাহাঙ্গীর এর আলোচনা',
+    duration: 1043,
     category: 'Lecture',
     language: 'Bengali',
     channelId: 'bangla-1',
-    thumbnail: 'https://img.youtube.com/vi/MsyOd9nnXRM/maxresdefault.jpg'
+    thumbnail: 'https://img.youtube.com/vi/NTtDNHKr-zk/maxresdefault.jpg'
   },
   {
     id: 'b4',
-    videoId: 'O03n_lX0lnU',
-    title: 'Important Ramadan Answers – মাহে রমজান সম্পর্কিত প্রশ্নের উত্তর',
-    description: '২০টি গুরুত্বপূর্ণ রমজান প্রশ্নের উত্তর',
-    duration: 900,
+    videoId: 'mT5HfBlIbKM',
+    title: '20.3 সূরা ত্ব-হা ২য় পর্ব (অংশ - ১/৩) ।। Dr. Imam Hossain',
+    description: 'সূরা ত্ব-হা ২য় পর্ব - Dr. Imam Hossain এর তাফসীর',
+    duration: 1233,
     category: 'Lecture',
     language: 'Bengali',
     channelId: 'bangla-1',
-    thumbnail: 'https://img.youtube.com/vi/O03n_lX0lnU/maxresdefault.jpg'
+    thumbnail: 'https://img.youtube.com/vi/mT5HfBlIbKM/maxresdefault.jpg'
   },
   {
     id: 'b5',
-    videoId: 'wX1AEPleTHw',
-    title: 'Siyam Sunnah & Rules – রোজার নিয়ত ও সুন্নত',
-    description: 'রোজার নিয়ত ও সুন্নত সম্পর্কে ড. আব্দুল্লাহ জাহাঙ্গীর এর আলোচনা',
-    duration: 1200,
+    videoId: '2C8rGnSyeVA',
+    title: 'জেনে নিন ড. খোন্দকার আব্দুল্লাহ জাহঙ্গীর রাহ. ইসলামিক টিভির প্রোগ্রাম দৈনন্দিন জীবনে ইসলাম',
+    description: 'দৈনন্দিন জীবনে ইসলাম - ড. খোন্দকার আব্দুল্লাহ জাহাঙ্গীর এর প্রোগ্রাম',
+    duration: 1911,
     category: 'Lecture',
     language: 'Bengali',
     channelId: 'bangla-1',
-    thumbnail: 'https://img.youtube.com/vi/wX1AEPleTHw/maxresdefault.jpg'
+    thumbnail: 'https://img.youtube.com/vi/2C8rGnSyeVA/maxresdefault.jpg'
+  },
+  {
+    id: 'b6',
+    videoId: 'EBmlXo-lgcU',
+    title: 'আপনার জিজ্ঞাসা ২০২৪ | Apnar Jiggasa | EP 3206 | NTV Islamic Show',
+    description: 'আপনার জিজ্ঞাসা - এনটিভি ইসলামিক শো',
+    duration: 1362,
+    category: 'Q&A',
+    language: 'Bengali',
+    channelId: 'bangla-1',
+    thumbnail: 'https://img.youtube.com/vi/EBmlXo-lgcU/maxresdefault.jpg'
+  },
+  // Upcoming Programs
+  {
+    id: 'b7',
+    videoId: 't0Xici9CVZo',
+    title: '১০. কিতাবুল আদাব। শাইখ শাহীদুল্লাহ খান মাদানী। পিস টিভি বাংলা',
+    description: 'কিতাবুল আদাব - শাইখ শাহীদুল্লাহ খান মাদানী এর আলোচনা',
+    duration: 1800,
+    category: 'Lecture',
+    language: 'Bengali',
+    channelId: 'bangla-1',
+    thumbnail: 'https://img.youtube.com/vi/t0Xici9CVZo/maxresdefault.jpg'
+  },
+  {
+    id: 'b8',
+    videoId: 'XTs0pbt0RBw',
+    title: '৪.৪ জন্মনিয়ন্ত্রণ ও তার অশুভ পরিণাম। জ্ঞানগর্ভ আলোচনার মঞ্চ। গ্রুপ আলোচনা। পিস টিভি বাংলা',
+    description: 'জন্মনিয়ন্ত্রণ ও তার পরিণাম সম্পর্কে জ্ঞানগর্ভ আলোচনা',
+    duration: 1799,
+    category: 'Lecture',
+    language: 'Bengali',
+    channelId: 'bangla-1',
+    thumbnail: 'https://img.youtube.com/vi/XTs0pbt0RBw/maxresdefault.jpg'
+  },
+  {
+    id: 'b9',
+    videoId: 's3B-9ZHhNdM',
+    title: 'করোনা পরিস্থিতিতে আকিদা বিশুদ্ধ রাখতে ৫টি বিষয় মাথায় রাখুন',
+    description: 'করোনা পরিস্থিতিতে আকিদা বিশুদ্ধ রাখার উপায়',
+    duration: 1019,
+    category: 'Lecture',
+    language: 'Bengali',
+    channelId: 'bangla-1',
+    thumbnail: 'https://img.youtube.com/vi/s3B-9ZHhNdM/maxresdefault.jpg'
+  },
+  {
+    id: 'b10',
+    videoId: 'x04S5VXWL9Q',
+    title: 'নির্বাচিত প্রশ্নোত্তর \'শরয়ী সমাধান\'। পর্ব-২৮৫',
+    description: 'শরয়ী সমাধান - নির্বাচিত প্রশ্নোত্তর',
+    duration: 4022,
+    category: 'Q&A',
+    language: 'Bengali',
+    channelId: 'bangla-1',
+    thumbnail: 'https://img.youtube.com/vi/x04S5VXWL9Q/maxresdefault.jpg'
+  },
+  {
+    id: 'b11',
+    videoId: 'pOo8X-GQNV8',
+    title: 'Live:Tafseerul Quran Surah # 17, AL-ISRA Part-3(Ayat:31-55)',
+    description: 'তাফসীরুল কুরআন - সূরা আল-ইসরা (আয়াত ৩১-৫৫)',
+    duration: 5923,
+    category: 'Tafseer',
+    language: 'Bengali',
+    channelId: 'bangla-1',
+    thumbnail: 'https://img.youtube.com/vi/pOo8X-GQNV8/maxresdefault.jpg'
+  },
+  {
+    id: 'b12',
+    videoId: 'alRKQczhJpM',
+    title: 'লাইভ : সীরাতে রহমাতুল্লিল আলামিন - ধারাবাহিক আলোচনা - পর্ব -৩',
+    description: 'সীরাতে রহমাতুল্লিল আলামিন - ধারাবাহিক আলোচনা',
+    duration: 4144,
+    category: 'Seerah',
+    language: 'Bengali',
+    channelId: 'bangla-1',
+    thumbnail: 'https://img.youtube.com/vi/alRKQczhJpM/maxresdefault.jpg'
+  },
+  {
+    id: 'b13',
+    videoId: 'muYIj4KAIy8',
+    title: 'রমাদান বিষয়ক প্রশ্নোত্তরের ধারাবাহিক অনুষ্ঠান (পর্ব-১০)',
+    description: 'রমাদান বিষয়ক প্রশ্নোত্তর - পর্ব ১০',
+    duration: 2191,
+    category: 'Q&A',
+    language: 'Bengali',
+    channelId: 'bangla-1',
+    thumbnail: 'https://img.youtube.com/vi/muYIj4KAIy8/maxresdefault.jpg'
+  },
+  {
+    id: 'b14',
+    videoId: 'OxoIOfeTB80',
+    title: '।। Dr. Imam Hossain',
+    description: 'Dr. Imam Hossain এর আলোচনা',
+    duration: 4581,
+    category: 'Lecture',
+    language: 'Bengali',
+    channelId: 'bangla-1',
+    thumbnail: 'https://img.youtube.com/vi/OxoIOfeTB80/maxresdefault.jpg'
+  },
+  {
+    id: 'b15',
+    videoId: 'UCn1v4ME2tc',
+    title: 'জুম\'আর খুতবাহ্ : জিল-হজ্জ মাসের প্রথম দশ দিনের করনীয় আমল সমূহ',
+    description: 'জুমআর খুতবাহ - জিল-হজ্জ মাসের আমল সমূহ',
+    duration: 3655,
+    category: 'Lecture',
+    language: 'Bengali',
+    channelId: 'bangla-1',
+    thumbnail: 'https://img.youtube.com/vi/UCn1v4ME2tc/maxresdefault.jpg'
+  },
+  {
+    id: 'b16',
+    videoId: 'FZ8Zy4IW6MA',
+    title: 'আল কুরআনের আলো । পর্ব ৩০১। শাইখ মতিউর রহমান মাদানী । পিস টিভি বাংলা',
+    description: 'আল কুরআনের আলো - শাইখ মতিউর রহমান মাদানী',
+    duration: 1316,
+    category: 'Quran',
+    language: 'Bengali',
+    channelId: 'bangla-1',
+    thumbnail: 'https://img.youtube.com/vi/FZ8Zy4IW6MA/maxresdefault.jpg'
   }
 ]
 
