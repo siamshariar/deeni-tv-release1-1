@@ -50,20 +50,26 @@ export const metadata: Metadata = {
   
   icons: {
     icon: [
-      { url: '/DeeniTV-16.png', type: 'image/png', sizes: '16x16' },
-      { url: '/DeeniTV-32.png', type: 'image/png', sizes: '32x32' },
-      { url: '/DeeniTV-48.png', type: 'image/png', sizes: '48x48' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
+      { url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/favicon-48x48.png', type: 'image/png', sizes: '48x48' },
+      { url: '/favicon-192x192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/favicon-256x256.png', type: 'image/png', sizes: '256x256' },
     ],
     apple: [
-      { url: '/DeeniTV-180.png', sizes: '180x180', type: 'image/png' },
-      { url: '/DeeniTV-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/DeeniTV-256.png', sizes: '256x256', type: 'image/png' },
+      { url: '/favicon-180x180.png', sizes: '180x180', type: 'image/png' },
+      { url: '/favicon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/favicon-256x256.png', sizes: '256x256', type: 'image/png' },
+      { url: '/favicon-384x384.png', sizes: '384x384', type: 'image/png' },
+      { url: '/favicon-512x512.png', sizes: '512x512', type: 'image/png' },
     ],
+    shortcut: '/favicon.ico',
     other: [
       {
         rel: 'mask-icon',
-        url: '/DeeniTV.svg',
-        color: '#000000',
+        url: '/safari-pinned-tab.svg',
+        color: '#13b589',
       },
     ],
   },
@@ -77,7 +83,7 @@ export const metadata: Metadata = {
     siteName: 'Deeni.tv',
     images: [
       {
-        url: '/DeeniTV-512.png',
+        url: '/favicon-512x512.png',
         width: 512,
         height: 512,
         alt: 'Deeni.tv - Spiritual TV Experience',
@@ -91,7 +97,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Deeni.tv - Your Spiritual TV Experience',
     description: 'Experience premium spiritual content in a cinematic lean-back TV interface',
-    images: ['/DeeniTV-512.png'],
+    images: ['/favicon-512x512.png'],
     creator: '@deenitv',
   },
   
@@ -143,35 +149,34 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <link rel="manifest" href="/manifest.webmanifest" />
         
-        {/* Favicons */}
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" type="image/svg+xml" href="/DeeniTV.svg" />
-        <link rel="icon" type="image/png" sizes="16x16" href="/DeeniTV-16.png" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/DeeniTV-32.png" />
-        <link rel="icon" type="image/png" sizes="48x48" href="/DeeniTV-48.png" />
+        {/* Favicons - using provided favicon-*.png files */}
         <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+        <link rel="icon" type="image/png" sizes="256x256" href="/favicon-256x256.png" />
+        <link rel="icon" type="image/png" sizes="384x384" href="/favicon-384x384.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png" />
         
         {/* Apple Touch Icons */}
-        <link rel="apple-touch-icon" href="/DeeniTV-180.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/DeeniTV-180.png" />
-        <link rel="apple-touch-icon" sizes="192x192" href="/DeeniTV-192.png" />
-        <link rel="apple-touch-icon" sizes="256x256" href="/DeeniTV-256.png" />
-        <link rel="apple-touch-icon" sizes="384x384" href="/DeeniTV-384.png" />
-        <link rel="apple-touch-icon" sizes="512x512" href="/DeeniTV-512.png" />
+        <link rel="apple-touch-icon" href="/favicon-180x180.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/favicon-180x180.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192x192.png" />
+        <link rel="apple-touch-icon" sizes="256x256" href="/favicon-256x256.png" />
+        <link rel="apple-touch-icon" sizes="384x384" href="/favicon-384x384.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/favicon-512x512.png" />
         
         {/* Apple Startup Images */}
-        <link rel="apple-touch-startup-image" href="/DeeniTV-512.png" />
+        <link rel="apple-touch-startup-image" href="/favicon-512x512.png" />
         
         {/* Safari Pinned Tab */}
-        <link rel="mask-icon" href="/DeeniTV.svg" color="#000000" />
-        
-        {/* Android Chrome Icons */}
-        <link rel="icon" sizes="192x192" href="/DeeniTV-192.png" />
-        <link rel="icon" sizes="256x256" href="/DeeniTV-256.png" />
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#13b589" />
         
         {/* MS Application */}
-        <meta name="msapplication-TileImage" content="/DeeniTV-256.png" />
-        <meta name="msapplication-TileColor" content="#000000" />
+        <meta name="msapplication-TileImage" content="/favicon-256x256.png" />
+        <meta name="msapplication-TileColor" content="#13b589" />
         
         {/* PWA Compatibility */}
         <script
