@@ -81,7 +81,7 @@
   "screenshots": [
     {
       "src": "/screenshot-mobile.png",
-      "sizes": "390x844",
+      "sizes": "540x960",
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Deeni.tv on mobile – watch Islamic content on the go"
