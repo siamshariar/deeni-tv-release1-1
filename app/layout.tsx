@@ -14,19 +14,21 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
+        url: '/DeeniTV.svg',
         type: 'image/svg+xml',
       },
+      {
+        url: '/favicon-32x32.png',
+        type: 'image/png',
+        sizes: '32x32',
+      },
+      {
+        url: '/favicon-16x16.png',
+        type: 'image/png',
+        sizes: '16x16',
+      },
     ],
-    apple: '/apple-icon.png',
+    apple: '/favicon-180x180.png',
   },
 }
 
