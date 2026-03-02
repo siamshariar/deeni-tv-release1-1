@@ -31,7 +31,7 @@ export function DonateButton() {
         "
       >
         {/* Deeni.tv Logo */}
-        <div className="relative py-2 h-20 w-20 rounded-lg flex items-center justify-center overflow-hidden">
+        <div className="relative py-2 h-20 w-14 rounded-lg flex items-center justify-center overflow-hidden">
           <Image
             src={DONATION_LOGO_URL}
             alt="Deeni.tv"
