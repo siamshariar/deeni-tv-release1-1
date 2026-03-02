@@ -63,5 +63,27 @@
     "lifestyle"
   ],
   "orientation": "any",
-  "screenshots": []
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "protocol_handlers": [
+    {
+      "protocol": "web+deenitv",
+      "url": "/?source=pwa&channel=%s"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Deeni.tv on mobile – watch Islamic content on the go"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Deeni.tv on desktop – cinematic TV-like experience"
+    }
+  ]
 }
