@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getCurrentProgram, getPreviousPrograms, getUpcomingPrograms, CHANNELS, SCHEDULE_VERSION, MASTER_EPOCH_START } from '@/lib/schedule-utils'
+import { getCurrentProgram, getUpcomingPrograms, getChannelPrograms, CHANNELS, MASTER_EPOCH_START } from '@/lib/schedule-utils'
 
 export async function GET(request: Request) {
   try {
@@ -7,16 +7,81 @@ export async function GET(request: Request) {
     const channelId = searchParams.get('channel') || CHANNELS[0].id
     
     const data = getCurrentProgram(channelId)
-    
-    // Get language from channel
-    const channel = CHANNELS.find(c => c.id === channelId)
-    const language = channel?.language || 'Bengali'
-    
-    // Get previous videos for this language
-    const previousVideos = getPreviousPrograms(language)
-    
-    const upcomingResult = getUpcomingPrograms(channelId, 15)
+    const upcomingResult = getUpcomingPrograms(channelId, 10)
     const serverTime = Date.now()
+    const programs = getChannelPrograms(channelId)
+    
+    // Calculate program start/end times
+    const programStartTime = serverTime - (data.currentTime * 1000)
+    const programEndTime = programStartTime + (data.program.duration * 1000)
+    
+    // Format currentProgram in exact API format
+    const currentProgram = {
+      ytVideoId: data.program.videoId,
+      title: data.program.title,
+      startTime: programStartTime,
+      endTime: programEndTime,
+      duration: data.program.duration,
+      seekTo: data.currentTime
+    }
+    
+    // Calculate previousPrograms - programs that already played in current cycle
+    const previousPrograms: Array<{
+      ytVideoId: string
+      title: string
+      startTime: number
+      endTime: number
+      duration: number
+    }> = []
+    
+    // Get programs that played before current in this cycle
+    let prevEndTime = programStartTime
+    for (let i = data.programIndex - 1; i >= 0 && previousPrograms.length < 5; i--) {
+      const prog = programs[i]
+      const endTime = prevEndTime
+      const startTime = endTime - (prog.duration * 1000)
+      previousPrograms.unshift({
+        ytVideoId: prog.videoId,
+        title: prog.title,
+        startTime,
+        endTime,
+        duration: prog.duration
+      })
+      prevEndTime = startTime
+    }
+    
+    // If we need more previous programs, wrap around from end of schedule (previous cycle)
+    if (previousPrograms.length < 5 && data.programIndex < 5) {
+      const needed = 5 - previousPrograms.length
+      for (let i = programs.length - 1; i >= programs.length - needed && i >= 0; i--) {
+        const prog = programs[i]
+        const endTime = prevEndTime
+        const startTime = endTime - (prog.duration * 1000)
+        previousPrograms.unshift({
+          ytVideoId: prog.videoId,
+          title: prog.title,
+          startTime,
+          endTime,
+          duration: prog.duration
+        })
+        prevEndTime = startTime
+      }
+    }
+    
+    // Format upcomingPrograms in exact API format
+    let nextStartTime = programEndTime
+    const upcomingPrograms = upcomingResult.upcoming.map(prog => {
+      const startTime = nextStartTime
+      const endTime = startTime + (prog.duration * 1000)
+      nextStartTime = endTime
+      return {
+        ytVideoId: prog.videoId,
+        title: prog.title,
+        startTime,
+        endTime,
+        duration: prog.duration
+      }
+    })
     
     const headers = {
       'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
@@ -26,25 +91,17 @@ export async function GET(request: Request) {
       'Access-Control-Allow-Origin': '*',
     }
     
+    // Return EXACT format as specified
     return NextResponse.json({
-      success: true,
-      data: {
-        ...data,
-        isLastInCycle: data.programIndex === data.totalPrograms - 1,
-        isFirstInCycle: data.programIndex === 0,
-        scheduleVersion: SCHEDULE_VERSION,
-        masterEpoch: MASTER_EPOCH_START,
-        availableChannels: CHANNELS.map(c => ({ id: c.id, name: c.name, language: c.language, icon: c.icon })),
-        previousVideos,
-        upcomingVideos: upcomingResult.upcoming,
-        language
-      },
-      serverTimestamp: serverTime
+      serverTime,
+      currentProgram,
+      previousPrograms,
+      upcomingPrograms
     }, { headers })
   } catch (error) {
     console.error('Error fetching current video:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch current video' },
+      { error: 'Failed to fetch current video' },
       { status: 500, headers: { 'Cache-Control': 'no-store' } }
     )
   }

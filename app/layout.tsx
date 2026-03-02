@@ -50,28 +50,25 @@ export const metadata: Metadata = {
   
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/DeeniTV.svg', type: 'image/svg+xml' },
-      { url: '/favicon-16x16.png', type: 'image/png', sizes: '16x16' },
-      { url: '/favicon-32x32.png', type: 'image/png', sizes: '32x32' },
-      { url: '/favicon-48x48.png', type: 'image/png', sizes: '48x48' },
-      { url: '/icon-light-32x32.png', type: 'image/png', sizes: '32x32', media: '(prefers-color-scheme: light)' },
-      { url: '/icon-dark-32x32.png', type: 'image/png', sizes: '32x32', media: '(prefers-color-scheme: dark)' },
+      { url: '/DeeniTV-16.png', type: 'image/png', sizes: '16x16' },
+      { url: '/DeeniTV-32.png', type: 'image/png', sizes: '32x32' },
+      { url: '/DeeniTV-48.png', type: 'image/png', sizes: '48x48' },
     ],
     apple: [
-      { url: '/apple-icon.png', sizes: '180x180', type: 'image/png' },
-      { url: '/favicon-180x180.png', sizes: '180x180', type: 'image/png' },
+      { url: '/DeeniTV-180.png', sizes: '180x180', type: 'image/png' },
+      { url: '/DeeniTV-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/DeeniTV-256.png', sizes: '256x256', type: 'image/png' },
     ],
     other: [
       {
         rel: 'mask-icon',
         url: '/DeeniTV.svg',
-        color: '#193a20',
+        color: '#000000',
       },
     ],
   },
   
-  manifest: '/manifest.json', // We'll create this if needed
+  manifest: '/manifest.json',
   
   openGraph: {
     title: 'Deeni.tv - Your Spiritual TV Experience',
@@ -80,9 +77,9 @@ export const metadata: Metadata = {
     siteName: 'Deeni.tv',
     images: [
       {
-        url: '/og-image.jpg',
-        width: 1200,
-        height: 630,
+        url: '/DeeniTV-512.png',
+        width: 512,
+        height: 512,
         alt: 'Deeni.tv - Spiritual TV Experience',
       },
     ],
@@ -94,7 +91,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Deeni.tv - Your Spiritual TV Experience',
     description: 'Experience premium spiritual content in a cinematic lean-back TV interface',
-    images: ['/twitter-image.jpg'],
+    images: ['/DeeniTV-512.png'],
     creator: '@deenitv',
   },
   
@@ -118,13 +115,15 @@ export const metadata: Metadata = {
   
   category: 'religion',
   
-  // Prevent automatic service worker registration
+  // PWA meta tags
   other: {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'apple-mobile-web-app-title': 'Deeni.tv',
     'format-detection': 'telephone=no',
+    'mobile-web-app-capable': 'yes',
     'msapplication-TileColor': '#000000',
-    'msapplication-config': 'none', // Prevents browser from looking for browserconfig.xml
+    'msapplication-tap-highlight': 'no',
   },
 }
 
@@ -140,48 +139,45 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* Prevent browser from automatically requesting service worker */}
-        <meta name="service-worker" content="none" />
+        {/* PWA Meta Tags */}
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="manifest" href="/manifest.webmanifest" />
         
-        {/* Additional meta tags to prevent automatic service worker registration */}
-        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-        <meta httpEquiv="Pragma" content="no-cache" />
-        <meta httpEquiv="Expires" content="0" />
+        {/* Favicons */}
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/svg+xml" href="/DeeniTV.svg" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/DeeniTV-16.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/DeeniTV-32.png" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/DeeniTV-48.png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
         
-        {/* Remove any default service worker registrations */}
+        {/* Apple Touch Icons */}
+        <link rel="apple-touch-icon" href="/DeeniTV-180.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/DeeniTV-180.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/DeeniTV-192.png" />
+        <link rel="apple-touch-icon" sizes="256x256" href="/DeeniTV-256.png" />
+        <link rel="apple-touch-icon" sizes="384x384" href="/DeeniTV-384.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/DeeniTV-512.png" />
+        
+        {/* Apple Startup Images */}
+        <link rel="apple-touch-startup-image" href="/DeeniTV-512.png" />
+        
+        {/* Safari Pinned Tab */}
+        <link rel="mask-icon" href="/DeeniTV.svg" color="#000000" />
+        
+        {/* Android Chrome Icons */}
+        <link rel="icon" sizes="192x192" href="/DeeniTV-192.png" />
+        <link rel="icon" sizes="256x256" href="/DeeniTV-256.png" />
+        
+        {/* MS Application */}
+        <meta name="msapplication-TileImage" content="/DeeniTV-256.png" />
+        <meta name="msapplication-TileColor" content="#000000" />
+        
+        {/* PWA Compatibility */}
         <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Prevent automatic service worker registration
-              if ('serviceWorker' in navigator) {
-                // Unregister any existing service workers
-                navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                  for(let registration of registrations) {
-                    registration.unregister();
-                  }
-                });
-                
-                // Override register method to prevent new registrations
-                const originalRegister = navigator.serviceWorker.register;
-                navigator.serviceWorker.register = function() {
-                  console.log('Service worker registration blocked');
-                  return Promise.reject(new Error('Service worker registration disabled'));
-                };
-              }
-              
-              // Prevent browser from fetching /sw.js
-              if (window.navigation) {
-                const originalFetch = window.fetch;
-                window.fetch = function(url, options) {
-                  if (typeof url === 'string' && url.includes('/sw.js')) {
-                    console.log('Blocked fetch for /sw.js');
-                    return Promise.reject(new Error('Service worker fetch blocked'));
-                  }
-                  return originalFetch.call(this, url, options);
-                };
-              }
-            `,
-          }}
+          async
+          src="https://cdn.jsdelivr.net/npm/pwacompat"
+          crossOrigin="anonymous"
         />
       </head>
       <body 
@@ -192,21 +188,6 @@ export default function RootLayout({
           {children}
         </div>
         <Analytics />
-        
-        {/* Optional: Create an empty service worker to satisfy requests (if needed) */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              // Respond to service worker requests with empty response
-              if ('serviceWorker' in navigator && window.location.pathname !== '/sw.js') {
-                const swUrl = '/sw.js';
-                fetch(swUrl).catch(() => {
-                  // Ignore - we're blocking it anyway
-                });
-              }
-            `,
-          }}
-        />
       </body>
     </html>
   )

@@ -28,6 +28,7 @@ import {
   saveChannel,
   addToPreviousVideos,
   getPreviousVideos,
+  savePreviousVideos,
   STORAGE_KEY
 } from '@/lib/schedule-utils'
 import { useYouTubePlayer, YT_STATE } from '@/hooks/use-youtube-player'
@@ -213,6 +214,7 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
           'max-w-4xl px-8'
         }`}>
           <div className="text-center">
+            {/* App Logo with Animation */}
             <div className={`relative flex items-center justify-center ${
               isMobile ? 'mb-0.5 p-0' : ' p-8'
             }`}>
@@ -254,21 +256,19 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
               </div>
             </div>
             
-            <motion.h1 
-              className={`font-bold text-white mb-2 ${
-                isMobile ? 'text-3xl' : 
-                isTablet ? 'text-4xl' : 
-                'text-5xl'
-              }`}
+            {/* Logo with full branding */}
+            <motion.div
+              className="flex items-center justify-center mb-6"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              Deeni
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">
-                .tv
-              </span>
-            </motion.h1>
+              <img 
+                src="/DeeniTV.svg" 
+                alt="Deeni.tv - Your Spiritual TV Experience"
+                className={isMobile ? 'h-10' : isTablet ? 'h-12' : 'h-14'}
+              />
+            </motion.div>
             
             <motion.p 
               className={`text-white/60  ${
@@ -320,9 +320,8 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
                   isMobile ? 'px-6 py-4 text-base' : 'px-8 py-6 text-lg'
                 }`}
               >
-                <span className="relative z-10 flex items-center gap-2">
-                  <Play className={isMobile ? 'h-4 w-4 fill-current' : 'h-5 w-5 fill-current'} />
-                  Start Watching
+                <span className="relative z-10 flex items-center gap-3">
+                  <span className="font-bold">Start Watching</span>
                 </span>
                 <motion.div
                   className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
@@ -429,11 +428,11 @@ const DeeniLogo = ({ isMobile = false }: { isMobile?: boolean }) => {
       animate={{ opacity: 1, x: 0 }}
       className="flex items-center"
     >
-      <span className={`font-bold ${
-        isMobile ? 'text-xs' : 'text-2xl'
-      } text-white tracking-tight`}>
-        Deeni<span className="text-primary font-bold">.tv</span>
-      </span>
+      <img 
+        src="/DeeniTV.svg" 
+        alt="Deeni.tv"
+        className={isMobile ? 'h-4' : 'h-6'}
+      />
     </motion.div>
   )
 }
@@ -890,39 +889,111 @@ export function SyncedVideoPlayer({
       
       const result = await response.json()
       
-      if (!result.success || !result.data) {
+      // New API format: { serverTime, currentProgram, previousPrograms, upcomingPrograms }
+      if (!result.serverTime || !result.currentProgram) {
         throw new Error('Invalid API response')
       }
       
-      const offset = result.serverTimestamp - clientTime
+      const offset = result.serverTime - clientTime
       setServerTimeOffset(offset)
       
-      if (result.data.masterEpoch) {
-        masterEpochRef.current = result.data.masterEpoch
+      // Convert new API format to internal program format
+      const program: VideoProgram = {
+        id: result.currentProgram.ytVideoId,
+        videoId: result.currentProgram.ytVideoId,
+        title: result.currentProgram.title,
+        description: result.currentProgram.title,
+        duration: result.currentProgram.duration,
+        category: 'Lecture',
+        language: 'Bengali',
+        channelId: channelId,
+        thumbnail: `https://img.youtube.com/vi/${result.currentProgram.ytVideoId}/maxresdefault.jpg`
       }
       
-      const program = result.data.program
-      const startTime = result.data.currentTime
+      const startTime = result.currentProgram.seekTo
+      const timeRemaining = result.currentProgram.duration - result.currentProgram.seekTo
       
       setCurrentProgram(program)
-      setNextProgram(result.data.nextProgram)
       setCurrentTime(startTime)
       setDisplayTime(formatTime(startTime))
-      setTimeRemaining(formatTime(result.data.timeRemaining))
+      setTimeRemaining(formatTime(timeRemaining))
       setVideoDuration(program.duration)
+      
+      // Get next program from upcomingPrograms
+      if (result.upcomingPrograms && result.upcomingPrograms.length > 0) {
+        const nextProg = result.upcomingPrograms[0]
+        const nextProgram: VideoProgram = {
+          id: nextProg.ytVideoId,
+          videoId: nextProg.ytVideoId,
+          title: nextProg.title,
+          description: nextProg.title,
+          duration: nextProg.duration,
+          category: 'Lecture',
+          language: 'Bengali',
+          channelId: channelId,
+          thumbnail: `https://img.youtube.com/vi/${nextProg.ytVideoId}/maxresdefault.jpg`
+        }
+        setNextProgram(nextProgram)
+      }
+      
+      // Set cycle info from schedule
+      const programs = getChannelPrograms(channelId)
+      const currentIndex = programs.findIndex(p => p.videoId === result.currentProgram.ytVideoId)
       setCycleInfo({ 
-        current: result.data.programIndex + 1, 
-        total: result.data.totalPrograms 
+        current: currentIndex >= 0 ? currentIndex + 1 : 1, 
+        total: programs.length 
       })
       
-      // Set upcoming videos
-      const programs = getChannelPrograms(channelId)
-      const upcoming: VideoProgram[] = []
-      for (let i = 1; i <= 15; i++) {
-        const nextIndex = (result.data.programIndex + i) % programs.length
-        upcoming.push(programs[nextIndex])
-      }
+      // Set upcoming videos from API response
+      const upcoming: VideoProgram[] = (result.upcomingPrograms || []).map((prog: { ytVideoId: string; title: string; duration: number }) => ({
+        id: prog.ytVideoId,
+        videoId: prog.ytVideoId,
+        title: prog.title,
+        description: prog.title,
+        duration: prog.duration,
+        category: 'Lecture',
+        language: 'Bengali',
+        channelId: channelId,
+        thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
+      }))
       setUpcomingVideos(upcoming)
+      
+      // Set previous videos from API response (if available) - merge with existing localStorage
+      if (result.previousPrograms && result.previousPrograms.length > 0) {
+        const apiPrevious: VideoProgram[] = result.previousPrograms.map((prog: { ytVideoId: string; title: string; duration: number }) => ({
+          id: prog.ytVideoId,
+          videoId: prog.ytVideoId,
+          title: prog.title,
+          description: prog.title,
+          duration: prog.duration,
+          category: 'Lecture',
+          language: 'Bengali',
+          channelId: channelId,
+          thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
+        }))
+        
+        // Merge with existing localStorage data (API data takes precedence)
+        const existingPrevious = getPreviousVideos(channelId)
+        const mergedPrevious = [...apiPrevious]
+        
+        // Add any videos from localStorage that aren't in API response
+        existingPrevious.forEach(existing => {
+          if (!apiPrevious.find(p => p.id === existing.id)) {
+            mergedPrevious.push(existing)
+          }
+        })
+        
+        // Keep only last 30 videos
+        const finalPrevious = mergedPrevious.slice(0, 30)
+        setPreviousVideos(finalPrevious)
+        savePreviousVideos(channelId, finalPrevious)
+      } else {
+        // If API doesn't return previousPrograms, keep localStorage data
+        const existingPrevious = getPreviousVideos(channelId)
+        if (existingPrevious.length > 0) {
+          setPreviousVideos(existingPrevious)
+        }
+      }
       
       lastVideoIdRef.current = program.videoId
       
@@ -1104,20 +1175,76 @@ export function SyncedVideoPlayer({
       
       const result = await response.json()
       
-      if (!result.success || !result.data) return
-      
-      const offset = result.serverTimestamp - Date.now()
-      setServerTimeOffset(offset)
-      
-      // Replace upcoming videos entirely with server data
-      if (result.data.upcomingVideos && Array.isArray(result.data.upcomingVideos)) {
-        console.log('📋 Replacing upcoming videos with server data:', result.data.upcomingVideos.length, 'videos')
-        setUpcomingVideos(result.data.upcomingVideos)
+      // Handle new API format
+      if (result.serverTime) {
+        const offset = result.serverTime - Date.now()
+        setServerTimeOffset(offset)
       }
       
-      // Update next program info (but don't change current playback)
-      if (result.data.nextProgram) {
-        setNextProgram(result.data.nextProgram)
+      // Update upcoming videos from API
+      if (result.upcomingPrograms && Array.isArray(result.upcomingPrograms)) {
+        console.log('📋 Syncing upcoming videos:', result.upcomingPrograms.length, 'videos')
+        const upcoming: VideoProgram[] = result.upcomingPrograms.map((prog: { ytVideoId: string; title: string; duration: number }) => ({
+          id: prog.ytVideoId,
+          videoId: prog.ytVideoId,
+          title: prog.title,
+          description: prog.title,
+          duration: prog.duration,
+          category: 'Lecture',
+          language: 'Bengali',
+          channelId: currentChannelId,
+          thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
+        }))
+        setUpcomingVideos(upcoming)
+      }
+      
+      // Update next program
+      if (result.upcomingPrograms && result.upcomingPrograms.length > 0) {
+        const nextProg = result.upcomingPrograms[0]
+        const nextProgram: VideoProgram = {
+          id: nextProg.ytVideoId,
+          videoId: nextProg.ytVideoId,
+          title: nextProg.title,
+          description: nextProg.title,
+          duration: nextProg.duration,
+          category: 'Lecture',
+          language: 'Bengali',
+          channelId: currentChannelId,
+          thumbnail: `https://img.youtube.com/vi/${nextProg.ytVideoId}/maxresdefault.jpg`
+        }
+        setNextProgram(nextProgram)
+      }
+      
+      // Update previous videos from API if available
+      if (result.previousPrograms && result.previousPrograms.length > 0) {
+        console.log('📋 Syncing previous videos:', result.previousPrograms.length, 'videos')
+        const apiPrevious: VideoProgram[] = result.previousPrograms.map((prog: { ytVideoId: string; title: string; duration: number }) => ({
+          id: prog.ytVideoId,
+          videoId: prog.ytVideoId,
+          title: prog.title,
+          description: prog.title,
+          duration: prog.duration,
+          category: 'Lecture',
+          language: 'Bengali',
+          channelId: currentChannelId,
+          thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
+        }))
+        
+        // Merge with existing localStorage data
+        const existingPrevious = getPreviousVideos(currentChannelId)
+        const mergedPrevious = [...apiPrevious]
+        
+        // Add any videos from localStorage that aren't in API response
+        existingPrevious.forEach(existing => {
+          if (!apiPrevious.find(p => p.id === existing.id)) {
+            mergedPrevious.push(existing)
+          }
+        })
+        
+        // Keep only last 30 videos
+        const finalPrevious = mergedPrevious.slice(0, 30)
+        setPreviousVideos(finalPrevious)
+        savePreviousVideos(currentChannelId, finalPrevious)
       }
       
     } catch (error) {
@@ -1252,18 +1379,21 @@ export function SyncedVideoPlayer({
     // Show overlay every 2.5 minutes (150 seconds)
     const overlayInterval = setInterval(() => {
       setShowProgramOverlay(true)
-      // Hide after 5 seconds
+      // Hide after 8-10 seconds
+      const hideDelay = 8000 + Math.random() * 2000 // Random 8-10 seconds
       setTimeout(() => {
         setShowProgramOverlay(false)
-      }, 5000)
+      }, hideDelay)
     }, 150000) // 2.5 minutes
     
     // Show initial overlay after 10 seconds
     const initialTimeout = setTimeout(() => {
       setShowProgramOverlay(true)
+      // Hide after 8-10 seconds
+      const hideDelay = 8000 + Math.random() * 2000 // Random 8-10 seconds
       setTimeout(() => {
         setShowProgramOverlay(false)
-      }, 5000)
+      }, hideDelay)
     }, 10000)
     
     return () => {
@@ -1344,7 +1474,7 @@ export function SyncedVideoPlayer({
   return (
     <div className="relative flex items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-black min-h-screen w-full overflow-hidden">
       <div className={`relative w-full ${
-        isDesktop ? 'md:w-[80vw] md:max-w-[1600px]' :
+        isDesktop ? 'md:w-[70vw] md:max-w-[1400px]' :
         isTablet ? 'w-[90vw]' :
         'w-full'
       }`}>
@@ -1474,7 +1604,14 @@ export function SyncedVideoPlayer({
           {/* Player UI */}
           {!showStartScreen && !isLoading && !apiError && playerReady && currentProgram && (
             <>
-              {/* TOP LEFT SECTION - REMOVED per requirements (no Live badge, title, date/time) */}
+              {/* TOP LEFT SECTION - Deeni.tv Logo */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="absolute top-4 left-4 z-30 flex items-center gap-3"
+              >
+              </motion.div>
               
               {/* Program Overlay - Shows every 2-3 minutes */}
               <ProgramOverlay

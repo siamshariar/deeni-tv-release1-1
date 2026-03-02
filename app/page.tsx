@@ -16,6 +16,7 @@ export default function Home() {
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(false)
   const [activeModal, setActiveModal] = useState<'schedule' | 'about' | null>(null)
   const [currentProgramId, setCurrentProgramId] = useState<string>('')
+  const [liveSchedule, setLiveSchedule] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [hasUserInteracted, setHasUserInteracted] = useState(false)
   const [showStartModal, setShowStartModal] = useState(false)
@@ -38,7 +39,7 @@ export default function Home() {
     setIsLoading(false)
   }, [])
 
-  // Fetch current program ID from API when channel changes
+  // Fetch current program and schedule from API when channel changes
   useEffect(() => {
     if (!activeChannelId) return
 
@@ -46,7 +47,44 @@ export default function Home() {
       try {
         const response = await fetch(`/api/current-video?channel=${activeChannelId}`)
         const result = await response.json()
-        if (result.success && result.data) {
+        
+        if (result.currentProgram) {
+          // New API format
+          const currentId = result.currentProgram.ytVideoId
+          setCurrentProgramId(currentId)
+          
+          // Build live schedule from API data
+          const schedule = []
+          
+          // Add current program
+          schedule.push({
+            id: result.currentProgram.ytVideoId,
+            videoId: result.currentProgram.ytVideoId,
+            title: result.currentProgram.title,
+            duration: result.currentProgram.duration,
+            category: 'Lecture',
+            language: CHANNELS.find(c => c.id === activeChannelId)?.language || 'Bengali',
+            channelId: activeChannelId,
+          })
+          
+          // Add upcoming programs
+          if (result.upcomingPrograms && Array.isArray(result.upcomingPrograms)) {
+            result.upcomingPrograms.forEach((prog: any) => {
+              schedule.push({
+                id: prog.ytVideoId,
+                videoId: prog.ytVideoId,
+                title: prog.title,
+                duration: prog.duration,
+                category: 'Lecture',
+                language: CHANNELS.find(c => c.id === activeChannelId)?.language || 'Bengali',
+                channelId: activeChannelId,
+              })
+            })
+          }
+          
+          setLiveSchedule(schedule)
+        } else if (result.success && result.data) {
+          // Fallback for old API format
           setCurrentProgramId(result.data.program.id)
         }
       } catch (error) {
@@ -125,6 +163,15 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen bg-zinc-950">
+      {/* Logo Header - Fixed at top-left, responsive sizing */}
+      <div className="fixed top-2 left-2 sm:top-4 sm:left-4 z-50 flex items-center">
+        <img 
+          src="/DeeniTV.svg" 
+          alt="Deeni.tv Logo" 
+          className="h-8 w-auto sm:h-9 md:h-10 lg:h-11 drop-shadow-lg hover:opacity-90 transition-opacity"
+        />
+      </div>
+      
       {/* Donate Button - Fixed position */}
       <DonateButton />
       
@@ -160,7 +207,7 @@ export default function Home() {
       <ScheduleModal
         isOpen={activeModal === 'schedule'}
         onClose={handleCloseModal}
-        schedule={CHANNELS.find(c => c.id === activeChannelId)?.programs || []}
+        schedule={liveSchedule.length > 0 ? liveSchedule : (CHANNELS.find(c => c.id === activeChannelId)?.programs || [])}
         currentProgramId={currentProgramId}
       />
       
