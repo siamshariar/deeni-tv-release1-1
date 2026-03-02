@@ -149,7 +149,21 @@ const VideoPlayerModal = ({
   const handleVolumeChange = useCallback((value: number[]) => {
     const newVolume = value[0]
     setVolume(newVolume)
-    setIsMuted(newVolume === 0)
+    
+    // If volume is increased while muted, unmute first
+    if (newVolume > 0 && isMuted) {
+      setIsMuted(false)
+      // Send unmute command to YouTube
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(JSON.stringify({
+          event: 'command',
+          func: 'unMute',
+          args: []
+        }), '*')
+      }
+    } else if (newVolume === 0) {
+      setIsMuted(true)
+    }
     
     // Post message to YouTube iframe to change volume
     if (iframeRef.current && iframeRef.current.contentWindow) {
@@ -159,7 +173,7 @@ const VideoPlayerModal = ({
         args: [newVolume]
       }), '*')
     }
-  }, [])
+  }, [isMuted])
   
   const toggleMute = useCallback(() => {
     const newMuted = !isMuted
