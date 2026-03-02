@@ -1351,7 +1351,7 @@ export function SyncedVideoPlayer({
   return (
     <div className="relative flex items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-black min-h-screen w-full overflow-hidden">
       <div className={`relative w-full ${
-        isDesktop ? 'md:w-[80vw] md:max-w-[1600px]' :
+        isDesktop ? 'md:w-[70vw] md:max-w-[1400px]' :
         isTablet ? 'w-[90vw]' :
         'w-full'
       }`}>
