@@ -6,8 +6,8 @@ import Image from 'next/image'
 
 const DONATION_URL = 'https://www.deeniinfotech.com/donate#donation-form'
 
-// Placeholder logo URL - replace with actual logo from info section
-const DONATION_LOGO_URL = '/placeholder-logo.svg'
+// Deeni.tv Official Logo
+const DONATION_LOGO_URL = '/DeeniTV.svg'
 
 export function DonateButton() {
   const handleDonate = () => {
@@ -30,13 +30,13 @@ export function DonateButton() {
           group
         "
       >
-        {/* Donation Logo - Placeholder image for now */}
-        <div className="relative mr-1.5 md:mr-2 h-6 w-6 md:h-8 md:w-8 rounded-full bg-white/20 flex items-center justify-center overflow-hidden group-hover:bg-white/30 transition-colors">
+        {/* Deeni.tv Logo */}
+        <div className="relative mr-2 md:mr-3 h-10 w-20 md:h-12 md:w-24 lg:h-14 lg:w-28 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden group-hover:bg-white/20 transition-colors p-1 md:p-1.5">
           <Image
             src={DONATION_LOGO_URL}
-            alt="Donate"
-            width={32}
-            height={32}
+            alt="Deeni.tv"
+            width={112}
+            height={56}
             className="h-full w-full object-contain"
             onError={(e) => {
               // Fallback to Heart icon if image fails to load
@@ -44,7 +44,7 @@ export function DonateButton() {
               target.style.display = 'none'
               const parent = target.parentElement
               if (parent) {
-                parent.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 md:h-5 md:w-5 text-white"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" /></svg>'
+                parent.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 md:h-6 md:w-6 text-white"><path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" /></svg>'
               }
             }}
           />
