@@ -254,21 +254,26 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
               </div>
             </div>
             
-            <motion.h1 
-              className={`font-bold text-white mb-2 ${
-                isMobile ? 'text-3xl' : 
-                isTablet ? 'text-4xl' : 
-                'text-5xl'
+            <motion.div 
+              className={`flex items-center justify-center mb-4 ${
+                isMobile ? 'mb-2' : 
+                isTablet ? 'mb-3' : 
+                'mb-6'
               }`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              Deeni
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-purple-400">
-                .tv
-              </span>
-            </motion.h1>
+              <img 
+                src="/DeeniTV.svg" 
+                alt="Deeni.tv" 
+                className={`object-contain ${
+                  isMobile ? 'h-10 w-auto' : 
+                  isTablet ? 'h-10 w-auto' : 
+                  'h-16 w-auto'
+                }`}
+              />
+            </motion.div>
             
             <motion.p 
               className={`text-white/60 mb-2 md:mb-8 ${
@@ -429,11 +434,13 @@ const DeeniLogo = ({ isMobile = false }: { isMobile?: boolean }) => {
       animate={{ opacity: 1, x: 0 }}
       className="flex items-center"
     >
-      <span className={`font-bold ${
-        isMobile ? 'text-xs' : 'text-2xl'
-      } text-white tracking-tight`}>
-        Deeni<span className="text-primary font-bold">.tv</span>
-      </span>
+      <img 
+        src="/DeeniTV.svg" 
+        alt="Deeni.tv" 
+        className={`${
+          isMobile ? 'h-5 w-auto' : 'h-8 w-auto'
+        } object-contain`}
+      />
     </motion.div>
   )
 }
