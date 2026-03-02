@@ -1604,7 +1604,7 @@ export function SyncedVideoPlayer({
                       whileHover={{ scale: 1.02 }}
                       className={`flex items-center gap-2 md:gap-3 ${
                         isMobile ? 'flex-1 max-w-[140px]' : 'flex-1 max-w-xs'
-                      } bg-white/10 backdrop-blur-sm rounded-full px-2 py-1 md:px-3 md:py-2 border border-white/20`}
+                      } bg-white/10 backdrop-blur-sm rounded-full px-2 py-0.5 md:px-3 md:py-1 border border-white/20`}
                     >
                       <Button 
                         variant="ghost" 
