@@ -214,7 +214,7 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
         }`}>
           <div className="text-center">
             <div className={`relative flex items-center justify-center ${
-              isMobile ? 'mb-0.5 p-0' : 'mb-6 md:mb-12 p-8'
+              isMobile ? 'mb-0.5 p-0' : ' p-8'
             }`}>
               <div className={`relative flex items-center justify-center ${
                 isMobile ? 'w-24 h-24' : isTablet ? 'w-36 h-36' : 'w-44 h-44'
@@ -276,7 +276,7 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
             </motion.div>
             
             <motion.p 
-              className={`text-white/60 mb-2 md:mb-8 ${
+              className={`text-white/60  ${
                 isMobile ? 'text-sm' : 
                 isTablet ? 'text-base' : 
                 'text-lg'
