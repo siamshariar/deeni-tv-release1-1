@@ -35,10 +35,14 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-2xl mx-4"
           >
             <div className="backdrop-blur-xl bg-gradient-to-br from-zinc-900/95 via-zinc-900/90 to-zinc-950/95 border border-white/10 rounded-2xl p-6 md:p-12 shadow-2xl">
-              <div className="flex justify-between items-start mb-6 md:mb-8">
-                <div>
-                  <h2 className="text-3xl md:text-5xl font-bold text-white mb-2">Deeni.tv</h2>
-                  <p className="text-primary text-base md:text-lg font-medium">Your Spiritual Journey</p>
+              <div className="flex justify-between items-start mb-2 md:mb-4">
+                <div className="flex items-center gap-4">
+                  <img 
+                    src="/DeeniTV.svg" 
+                    alt="Deeni.tv" 
+                    className="h-10 md:h-12 w-auto object-contain mb-2"
+                  />
+
                 </div>
                 <Button
                   variant="ghost"
@@ -51,7 +55,9 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
                   <X className={isMobile ? 'h-7 w-7' : 'h-6 w-6'} />
                 </Button>
               </div>
-              
+                  <div>
+                    <p className="text-primary text-base md:text-lg font-medium mb-2">Your Spiritual Journey</p>
+                  </div>
               <div className="space-y-4 md:space-y-6 text-white/90 leading-relaxed text-sm md:text-base">
                 <p className="text-base md:text-lg">
                   Experience premium Islamic content in a revolutionary lean-back TV interface designed for modern audiences.
