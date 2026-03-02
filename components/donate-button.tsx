@@ -7,7 +7,7 @@ import Image from 'next/image'
 const DONATION_URL = 'https://www.deeniinfotech.com/donate#donation-form'
 
 // Deeni.tv Official Logo
-const DONATION_LOGO_URL = '/DeeniTV.svg'
+const DONATION_LOGO_URL = '/App_logo_384.png'
 
 export function DonateButton() {
   const handleDonate = () => {
@@ -15,7 +15,7 @@ export function DonateButton() {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-40 flex items-center gap-2">
+    <div className="fixed top-4 right-4 z-40 flex items-center">
       {/* Donate Button - Shows on all screens including mobile */}
       <Button
         size="lg"
@@ -25,17 +25,17 @@ export function DonateButton() {
           hover:from-primary/90 hover:to-primary/70 
           hover:scale-105 hover:shadow-xl hover:shadow-primary/30
           text-primary-foreground shadow-lg font-semibold 
-          px-3 md:px-5 py-2 md:py-3 rounded-full 
+           py-2 md:py-3 rounded-full gap-0 px-3 md:px-3
           transition-all duration-300 ease-out
-          group
+          group cursor-pointer flex items-center justify-center
         "
       >
         {/* Deeni.tv Logo */}
-        <div className="relative mr-2 md:mr-3 h-10 w-20 md:h-12 md:w-24 lg:h-14 lg:w-28 rounded-lg bg-white/10 flex items-center justify-center overflow-hidden group-hover:bg-white/20 transition-colors p-1 md:p-1.5">
+        <div className="relative py-2 h-20 w-20 rounded-lg flex items-center justify-center overflow-hidden">
           <Image
             src={DONATION_LOGO_URL}
             alt="Deeni.tv"
-            width={112}
+            width={56}
             height={56}
             className="h-full w-full object-contain"
             onError={(e) => {
