@@ -122,9 +122,15 @@ importers:
       input-otp:
         specifier: 1.4.1
         version: 1.4.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      jwt-simple:
+        specifier: ^0.5.6
+        version: 0.5.6
       lucide-react:
         specifier: ^0.454.0
         version: 0.454.0(react@19.2.0)
+      moment-timezone:
+        specifier: ^0.6.0
+        version: 0.6.0
       next:
         specifier: 16.0.10
         version: 16.0.10(@babel/core@7.29.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
@@ -171,6 +177,9 @@ importers:
       '@tailwindcss/postcss':
         specifier: ^4.1.9
         version: 4.1.18
+      '@types/jwt-simple':
+        specifier: ^0.5.36
+        version: 0.5.36
       '@types/node':
         specifier: ^22
         version: 22.19.11
@@ -1798,6 +1807,9 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
+  '@types/jwt-simple@0.5.36':
+    resolution: {integrity: sha512-UKOigRdpPdj7ODP+ouBC5U+7l0W0dAzGbrK23P0HFnTjVqbDAAEem8LIhTZf6NrDV/Bw8cxWQZnZ4DPBZkHfpA==}
+
   '@types/node@22.19.11':
     resolution: {integrity: sha512-BH7YwL6rA93ReqeQS1c4bsPpcfOmJasG+Fkr6Y59q83f9M1WcBRHR2vM+P9eOisYRcN3ujQoiZY8uk5W+1WL8w==}
 
@@ -2555,6 +2567,10 @@ packages:
     resolution: {integrity: sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==}
     engines: {node: '>=0.10.0'}
 
+  jwt-simple@0.5.6:
+    resolution: {integrity: sha512-40aUybvhH9t2h71ncA1/1SbtTNCVZHgsTsTgqPUxGWDmUDrXyDf2wMNQKEbdBjbf4AI+fQhbECNTV6lWxQKUzg==}
+    engines: {node: '>= 0.4.0'}
+
   leven@3.1.0:
     resolution: {integrity: sha512-qsda+H8jTaUaN/x5vzW2rzc+8Rw4TAQ/4KjB46IwK5VH+IlVeeeje/EoZRpiXvIqjFgK84QffqPztGI3VBLG1A==}
     engines: {node: '>=6'}
@@ -2689,6 +2705,12 @@ packages:
   minimatch@5.1.9:
     resolution: {integrity: sha512-7o1wEA2RyMP7Iu7GNba9vc0RWWGACJOCZBJX2GJWip0ikV+wcOsgVuY9uE8CPiyQhkGFSlhuSkZPavN7u1c2Fw==}
     engines: {node: '>=10'}
+
+  moment-timezone@0.6.0:
+    resolution: {integrity: sha512-ldA5lRNm3iJCWZcBCab4pnNL3HSZYXVb/3TYr75/1WCTWYuTqYUb5f/S384pncYjJ88lbO8Z4uPDvmoluHJc8Q==}
+
+  moment@2.30.1:
+    resolution: {integrity: sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how==}
 
   motion-dom@12.34.0:
     resolution: {integrity: sha512-Lql3NuEcScRDxTAO6GgUsRHBZOWI/3fnMlkMcH5NftzcN37zJta+bpbMAV9px4Nj057TuvRooMK7QrzMCgtz6Q==}
@@ -5101,6 +5123,8 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
+  '@types/jwt-simple@0.5.36': {}
+
   '@types/node@22.19.11':
     dependencies:
       undici-types: 6.21.0
@@ -5916,6 +5940,8 @@ snapshots:
 
   jsonpointer@5.0.1: {}
 
+  jwt-simple@0.5.6: {}
+
   leven@3.1.0: {}
 
   lightningcss-android-arm64@1.30.2:
@@ -6019,6 +6045,12 @@ snapshots:
   minimatch@5.1.9:
     dependencies:
       brace-expansion: 2.0.2
+
+  moment-timezone@0.6.0:
+    dependencies:
+      moment: 2.30.1
+
+  moment@2.30.1: {}
 
   motion-dom@12.34.0:
     dependencies:
