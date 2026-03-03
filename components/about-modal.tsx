@@ -32,13 +32,14 @@ export function AboutModal({ isOpen, onClose }: AboutModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-2xl mx-4"
+            className="fixed inset-0 z-[51] flex items-center justify-center p-4"
+            onClick={onClose}
           >
-            <div className="backdrop-blur-xl bg-gradient-to-br from-zinc-900/95 via-zinc-900/90 to-zinc-950/95 border border-white/10 rounded-2xl p-6 md:p-12 shadow-2xl">
+            <div className="w-full max-w-2xl max-h-[88vh] overflow-y-auto backdrop-blur-xl bg-gradient-to-br from-zinc-900/95 via-zinc-900/90 to-zinc-950/95 border border-white/10 rounded-2xl p-6 md:p-8 shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-start mb-2 md:mb-4">
                 <div className="flex items-center gap-4">
                   <img 
-                    src="/DeeniTV.svg" 
+                    src="/DeeniTV-V-2.png" 
                     alt="Deeni.tv" 
                     className="h-10 md:h-12 w-auto object-contain mb-2"
                   />

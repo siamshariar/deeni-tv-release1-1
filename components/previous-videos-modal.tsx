@@ -104,7 +104,7 @@ const BreakingNewsTicker = ({
       absolute left-0 right-0 z-20 overflow-hidden
       bg-gradient-to-r from-black via-black/95 to-black
       border-t border-white/10
-      ${isMobile ? 'bottom-16 h-12' : 'bottom-20 h-14'}
+      ${isMobile ? 'bottom-16 h-12' : 'bottom-18 h-14'}
     `}>
       {/* Gradient Fades */}
       <div className={`absolute left-0 top-0 bottom-0 ${isMobile ? 'w-8' : 'w-16'} bg-gradient-to-r from-black to-transparent z-10 pointer-events-none`} />
@@ -273,44 +273,7 @@ const VideoPlayerModal = ({
             </div>
             
             {/* Bottom Controls - Volume */}
-            <div className="absolute bottom-0 left-0 right-0 z-10 bg-gradient-to-t from-black/90 to-transparent p-4 md:p-6">
-              <div className="flex items-center justify-center gap-4">
-                {/* Volume Control */}
-                <div 
-                  className={`flex items-center gap-3 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 ${
-                    isMobile ? 'px-3 py-0' : 'px-4 py-2'
-                  } ${showVolumeSlider || !isMobile ? 'w-auto' : 'w-auto'}`}
-                  onMouseEnter={() => !isMobile && setShowVolumeSlider(true)}
-                  onMouseLeave={() => !isMobile && setShowVolumeSlider(false)}
-                >
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={toggleMute}
-                    className={`text-white/90 hover:bg-white/20 rounded-full ${
-                      isMobile ? 'h-10 w-10' : 'h-9 w-9'
-                    }`}
-                  >
-                    {getVolumeIcon()}
-                  </Button>
-                  
-                  {/* Volume Slider - Always show on mobile, hover on desktop */}
-                  <div className={`${isMobile ? 'w-32' : 'w-40'}`}>
-                    <Slider 
-                      value={[isMuted ? 0 : volume]} 
-                      onValueChange={handleVolumeChange} 
-                      max={100} 
-                      step={1} 
-                      className="h-2 [&_[role=slider]]:bg-primary [&_[role=slider]]:border-2 [&_[role=slider]]:border-white/20 [&_[role=slider]]:h-5 [&_[role=slider]]:w-5"
-                    />
-                  </div>
-                  
-                  <span className="text-white/80 text-sm font-medium min-w-[40px] text-center">
-                    {isMuted ? 0 : volume}%
-                  </span>
-                </div>
-              </div>
-            </div>
+
           </motion.div>
         </>
       )}
@@ -350,18 +313,18 @@ export function PreviousVideosModal({
   const handleCloseVideoPlayer = useCallback(() => {
     setShowVideoPlayer(false)
     setSelectedVideo(null)
-    // Resume main player - will show "Start Watching" state
+    // Resume/unmute main player
     onResumeMainPlayer?.()
-    // Close this modal too
-    onClose()
-  }, [onClose, onResumeMainPlayer])
+    // Do NOT close this modal - keep Previously Watched modal open
+    // User can continue browsing or close it manually
+  }, [onResumeMainPlayer])
 
   if (!mounted) return null
 
   return (
     <>
       <AnimatePresence>
-        {isOpen && !showVideoPlayer && (
+        {isOpen && (
           <>
             {/* Backdrop - Not clickable */}
             <motion.div

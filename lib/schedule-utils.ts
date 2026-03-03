@@ -301,30 +301,96 @@ const ARABIC_VIDEOS: VideoProgram[] = [
   }
 ]
 
-// Define channels
+// Define channels - No flags, only channel names
+// Channel IDs map to API lid (language/channel IDs)
 export const CHANNELS: Channel[] = [
   {
     id: 'bangla-1',
-    name: 'বাংলা লেকচার',
+    name: 'বাংলা',
     language: 'Bengali',
-    icon: '🇧🇩',
-    programs: BENGALI_VIDEOS
+    icon: '📺',
+    programs: BENGALI_VIDEOS,
   },
   {
     id: 'english-1',
-    name: 'English Lectures',
+    name: 'English',
     language: 'English',
-    icon: '🇬🇧',
-    programs: ENGLISH_VIDEOS
+    icon: '📺',
+    programs: ENGLISH_VIDEOS,
   },
   {
     id: 'arabic-1',
-    name: 'محاضرات عربية',
+    name: 'العربية',
     language: 'Arabic',
-    icon: '🇸🇦',
-    programs: ARABIC_VIDEOS
-  }
+    icon: '📺',
+    programs: ARABIC_VIDEOS,
+  },
+  {
+    id: 'urdu-1',
+    name: 'اردو',
+    language: 'Urdu',
+    icon: '📺',
+    programs: [],
+  },
+  {
+    id: 'chinese-1',
+    name: '中文',
+    language: 'Chinese',
+    icon: '📺',
+    programs: [],
+  },
+  {
+    id: 'quran-bangla',
+    name: 'কুরআন বাংলা',
+    language: 'Bengali',
+    icon: '📖',
+    programs: [],
+  },
+  {
+    id: 'quran-english',
+    name: 'Quran English',
+    language: 'English',
+    icon: '📖',
+    programs: [],
+  },
+  {
+    id: 'quran-arabic',
+    name: 'القرآن العربي',
+    language: 'Arabic',
+    icon: '📖',
+    programs: [],
+  },
+  {
+    id: 'quran-chinese',
+    name: '古兰经中文',
+    language: 'Chinese',
+    icon: '📖',
+    programs: [],
+  },
 ]
+
+// Map channel IDs to external API lid values
+export const CHANNEL_LID_MAP: Record<string, number> = {
+  'bangla-1': 5,
+  'english-1': 6,
+  'arabic-1': 7,
+  'urdu-1': 8,
+  'chinese-1': 9,
+  'quran-bangla': 5,
+  'quran-english': 6,
+  'quran-arabic': 7,
+  'quran-chinese': 9,
+}
+
+// Check if channel is a Quran channel
+export function isQuranChannel(channelId: string): boolean {
+  return channelId.startsWith('quran-')
+}
+
+// Get API lid for a channel
+export function getChannelLid(channelId: string): number {
+  return CHANNEL_LID_MAP[channelId] || 5
+}
 
 // Export SCHEDULE for backward compatibility
 export const SCHEDULE: VideoProgram[] = BENGALI_VIDEOS
@@ -432,10 +498,15 @@ export function clearPreviousVideos(channelId: string): void {
   }
 }
 
-// Get channel programs
+// Get channel programs (falls back to Bangla if channel has no programs)
 export function getChannelPrograms(channelId: string): VideoProgram[] {
   const channel = CHANNELS.find(c => c.id === channelId)
-  return channel?.programs || CHANNELS[0].programs
+  const programs = channel?.programs
+  // Fall back to Bangla programs if this channel has none yet
+  if (!programs || programs.length === 0) {
+    return CHANNELS[0].programs
+  }
+  return programs
 }
 
 // Get total duration for a channel

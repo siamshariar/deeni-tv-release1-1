@@ -21,6 +21,7 @@ export default function Home() {
   const [hasUserInteracted, setHasUserInteracted] = useState(false)
   const [showStartModal, setShowStartModal] = useState(false)
   const [openHistoryModal, setOpenHistoryModal] = useState(false)
+  const [openChannelSelectorModal, setOpenChannelSelectorModal] = useState(false)
 
   // Check localStorage for saved channel on initial load
   useEffect(() => {
@@ -94,8 +95,8 @@ export default function Home() {
 
     fetchCurrentProgram()
 
-    // Poll for updates every 30 seconds
-    const interval = setInterval(fetchCurrentProgram, 30000)
+    // Poll for updates every 5 minutes (300000ms)
+    const interval = setInterval(fetchCurrentProgram, 300000)
     return () => clearInterval(interval)
   }, [activeChannelId])
 
@@ -122,8 +123,7 @@ export default function Home() {
     
     if (option === 'language') {
       setTimeout(() => {
-        setIsFirstTimeUser(false) // Not first time when opening from menu
-        setIsChannelSelectorOpen(true)
+        setOpenChannelSelectorModal(true)
       }, 300)
     } else if (option === 'history') {
       // Open history modal in the player
@@ -163,14 +163,14 @@ export default function Home() {
 
   return (
     <main className="relative min-h-screen bg-zinc-950">
-      {/* Logo Header - Fixed at top-left, responsive sizing */}
-      <div className="fixed top-2 left-2 sm:top-4 sm:left-4 z-50 flex items-center">
+      {/* Logo Header - Commented out per requirements */}
+      {/* <div className="fixed top-2 left-2 sm:top-4 sm:left-4 z-50 flex items-center">
         <img 
           src="/DeeniTV.svg" 
           alt="Deeni.tv Logo" 
           className="h-8 w-auto sm:h-9 md:h-10 lg:h-11 drop-shadow-lg hover:opacity-90 transition-opacity"
         />
-      </div>
+      </div> */}
       
       {/* Donate Button - Fixed position */}
       <DonateButton />
@@ -184,6 +184,9 @@ export default function Home() {
         onStartClick={handleStartClick}
         openHistoryModal={openHistoryModal}
         onHistoryModalClose={() => setOpenHistoryModal(false)}
+        onOpenSchedule={() => setActiveModal('schedule')}
+        openChannelSelectorModal={openChannelSelectorModal}
+        onChannelSelectorModalClose={() => setOpenChannelSelectorModal(false)}
       />
       
       {/* Menu Drawer - Slides from bottom */}
