@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Languages, Calendar, Info, History } from 'lucide-react'
+import { X, Languages, Calendar, Info } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useMediaQuery } from '@/hooks/use-media-query'
 
@@ -15,9 +15,8 @@ export function MenuDrawer({ isOpen, onClose, onSelectOption }: MenuDrawerProps)
   const isMobile = useMediaQuery('(max-width: 640px)')
   
   const menuItems = [
-    { id: 'language' as const, label: 'Language', icon: Languages },
+    { id: 'language' as const, label: 'Channel', icon: Languages },
     { id: 'schedule' as const, label: 'Today\'s Schedule', icon: Calendar },
-    { id: 'history' as const, label: 'Watch History', icon: History },
     { id: 'about' as const, label: 'About', icon: Info },
   ]
 

@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Globe, ChevronRight, Sparkles } from 'lucide-react'
+import { X, Globe, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Channel } from '@/types/schedule'
 import { useMediaQuery } from '@/hooks/use-media-query'
@@ -12,116 +13,154 @@ interface ChannelSelectorProps {
   channels: Channel[]
   onSelectChannel: (channelId: string) => void
   currentChannelId?: string
-  isFirstTime?: boolean // If first time, no close option
+  isFirstTime?: boolean
 }
 
-export function ChannelSelector({ 
-  isOpen, 
-  onClose, 
-  channels, 
-  onSelectChannel, 
+export function ChannelSelector({
+  isOpen,
+  onClose,
+  channels,
+  onSelectChannel,
   currentChannelId,
-  isFirstTime = false
+  isFirstTime = false,
 }: ChannelSelectorProps) {
   const isMobile = useMediaQuery('(max-width: 640px)')
-  
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const filtered = channels.filter(
+    (ch) =>
+      ch.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ch.language.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
   const handleSelect = (channelId: string) => {
-    console.log('🎯 ChannelSelector: selecting', channelId)
     onSelectChannel(channelId)
-    // Don't call onClose here - let the parent handle it
+    if (!isFirstTime) onClose()
   }
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop - No onClick if first time (must select) */}
+          {/* Backdrop — not dismissable on first visit */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={isFirstTime ? undefined : onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-50"
+            className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[60]"
           />
-          
-          {/* Modal */}
+
+          {/* Modal — identical style to the internal ChannelSelectorModal (globe icon) */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.2 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 rounded-2xl shadow-2xl border border-white/10 z-50 overflow-hidden"
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full ${
+              isMobile ? 'max-w-sm' : 'max-w-2xl'
+            } bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 rounded-2xl shadow-2xl border border-white/10 z-[70] overflow-hidden`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-primary/20 rounded-lg">
-                  <Globe className="h-5 w-5 text-primary" />
+            <div className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-purple-500/20 to-primary/20 animate-gradient" />
+              <div className="relative flex items-center justify-between p-6 border-b border-white/10">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/20 rounded-xl">
+                    <Globe className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-white">Select Your Channel</h2>
+                    {isFirstTime && (
+                      <p className="text-white/40 text-xs flex items-center gap-1 mt-0.5">
+                        <Sparkles className="h-2.5 w-2.5" />
+                        Choose a channel to start watching
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-white">Select Channel</h2>
-                  {isFirstTime && (
-                    <p className="text-white/40 text-xs flex items-center gap-1">
-                      <Sparkles className="h-2.5 w-2.5" />
-                      Select to continue
-                    </p>
-                  )}
-                </div>
+                {/* No X button on first-time — user must pick a channel */}
+                {!isFirstTime && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onClose}
+                    className="text-white/60 hover:text-white hover:bg-white/10 rounded-xl"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                )}
               </div>
-              {!isFirstTime && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onClose}
-                  className={`text-white/60 hover:text-white hover:bg-white/10 rounded-xl ${
-                    isMobile ? 'h-12 w-12' : 'h-10 w-10'
-                  }`}
-                >
-                  <X className={isMobile ? 'h-7 w-7' : 'h-5 w-5'} />
-                </Button>
-              )}
             </div>
-            
-            {/* Channel List */}
-            <div className="p-4">
-              <p className="text-white/60 text-sm mb-4">
-                Choose your preferred language and channel
-              </p>
-              <div className="space-y-2">
-                {channels.map((channel, index) => (
+
+            {/* Search */}
+            <div className="p-4 border-b border-white/10">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search channels..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-3 pl-11 bg-white/5 border border-white/10 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                />
+                <Globe className="absolute left-3 top-3.5 h-4 w-4 text-white/40" />
+              </div>
+            </div>
+
+            {/* Channel grid */}
+            <div className="p-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {filtered.map((channel, index) => (
                   <motion.button
                     key={channel.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.05 }}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => handleSelect(channel.id)}
-                    className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
+                    className={`relative group p-4 rounded-xl border transition-all text-left ${
                       channel.id === currentChannelId
-                        ? 'bg-primary/10 border-primary/30'
+                        ? 'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border-primary/50 shadow-lg shadow-primary/20'
                         : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{channel.icon}</span>
-                      <div className="text-left">
-                        <p className={`font-semibold ${
+                    {channel.id === currentChannelId && (
+                      <motion.div
+                        className="absolute inset-0 rounded-xl bg-primary/20"
+                        animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.5, 0.3] }}
+                        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+                      />
+                    )}
+                    <div className="relative flex items-center gap-3">
+                      <div className="text-lg filter drop-shadow-lg">📺</div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-semibold truncate ${
                           channel.id === currentChannelId ? 'text-primary' : 'text-white'
                         }`}>
                           {channel.name}
                         </p>
-                        <p className="text-xs text-white/40">
-                          {channel.language} • {channel.programs.length} programs
+                        <p className="text-xs text-white/40 truncate">
+                          dini.tv/{channel.name.toLowerCase()}
                         </p>
                       </div>
+                      {channel.id === currentChannelId && (
+                        <div className="px-2 py-1 bg-primary/20 rounded-full flex-shrink-0">
+                          <span className="text-primary text-xs font-medium">Current</span>
+                        </div>
+                      )}
                     </div>
-                    <ChevronRight className={`h-5 w-5 ${
-                      channel.id === currentChannelId ? 'text-primary' : 'text-white/20'
-                    }`} />
                   </motion.button>
                 ))}
               </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-white/10 bg-white/5">
+              <p className="text-center text-xs text-white/40">
+                {filtered.length} channels available •{' '}
+                {isFirstTime ? 'Select a channel to begin' : 'Select your preferred channel'}
+              </p>
             </div>
           </motion.div>
         </>

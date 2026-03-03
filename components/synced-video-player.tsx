@@ -42,6 +42,9 @@ interface SyncedVideoPlayerProps {
   onStartClick?: () => void
   openHistoryModal?: boolean
   onHistoryModalClose?: () => void
+  onOpenSchedule?: () => void
+  openChannelSelectorModal?: boolean
+  onChannelSelectorModalClose?: () => void
 }
 
 // Channel Selector Modal Component
@@ -156,7 +159,7 @@ const ChannelSelectorModal = ({
                     )}
                     
                     <div className="relative flex items-center gap-3">
-                      <div className="text-3xl filter drop-shadow-lg">{channel.icon}</div>
+                      <div className="text-lg filter drop-shadow-lg">📺</div>
                       <div className="flex-1 text-left">
                         <p className={`font-semibold ${
                           channel.id === currentChannelId ? 'text-primary' : 'text-white'
@@ -164,7 +167,7 @@ const ChannelSelectorModal = ({
                           {channel.name}
                         </p>
                         <p className="text-xs text-white/40">
-                          {channel.language} • {channel.programs.length} programs
+                          dini.tv/{channel.name.toLowerCase()}
                         </p>
                       </div>
                       {channel.id === currentChannelId && (
@@ -180,7 +183,7 @@ const ChannelSelectorModal = ({
             
             <div className="p-4 border-t border-white/10 bg-white/5">
               <p className="text-center text-xs text-white/40">
-                {filteredChannels.length} channels available • Select your preferred language
+                {filteredChannels.length} channels available • Select your preferred channel
               </p>
             </div>
           </motion.div>
@@ -264,7 +267,7 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
               transition={{ delay: 0.2 }}
             >
               <img 
-                src="/DeeniTV.svg" 
+                src="/DeeniTV-V-2.png" 
                 alt="Deeni.tv - Your Spiritual TV Experience"
                 className={isMobile ? 'h-10' : isTablet ? 'h-12' : 'h-14'}
               />
@@ -358,7 +361,7 @@ const LiveBadge = ({ variant = 'default', isMobile = false }: { variant?: 'defau
   return null
 }
 
-// Program Overlay Component - Shows every 2-3 minutes
+// Program Overlay Component - Auto-appearing Now Playing bar (ticker-style)
 const ProgramOverlay = ({ 
   currentProgram, 
   nextProgram, 
@@ -374,19 +377,19 @@ const ProgramOverlay = ({
     <AnimatePresence>
       {isVisible && currentProgram && (
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.5 }}
+          initial={{ opacity: 0, x: isMobile ? 0 : 50, y: isMobile ? -20 : 0 }}
+          animate={{ opacity: 1, x: 0, y: 0 }}
+          exit={{ opacity: 0, x: isMobile ? 0 : 50, y: isMobile ? -20 : 0 }}
+          transition={{ duration: 0.4 }}
           className={`absolute z-30 ${
-            isMobile ? 'top-2 left-2 right-2' : 'top-4 left-4 right-1/2'
+            isMobile ? 'top-2 left-2 right-2' : 'top-4 left-4 right-1/3'
           }`}
         >
-          <div className={`backdrop-blur-xl bg-black/60 border border-white/10 rounded-xl ${
-            isMobile ? 'p-2' : 'p-4'
-          } shadow-2xl`}>
-            {/* Current Program */}
-            <div className="flex items-center gap-2 mb-1">
+          {/* <div className={`backdrop-blur-xl bg-black/70 border border-white/10 rounded-xl ${
+            isMobile ? 'p-2' : 'p-3'
+          } shadow-2xl`}> */}
+            {/* Now Playing - Just name */}
+            {/* <div className="flex items-center gap-2 mb-0.5">
               <span className="relative flex h-1.5 w-1.5 md:h-2 md:w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 md:h-2 md:w-2 bg-primary"></span>
@@ -395,25 +398,25 @@ const ProgramOverlay = ({
                 Now Playing
               </span>
             </div>
-            <h3 className={`text-white font-bold ${isMobile ? 'text-[11px] leading-tight' : 'text-lg'} line-clamp-1 mb-1 md:mb-2`}>
+            <h3 className={`text-white font-bold ${isMobile ? 'text-[11px] leading-tight' : 'text-sm'} line-clamp-1`}>
               {currentProgram.title}
-            </h3>
+            </h3> */}
             
-            {/* Next Program */}
-            {nextProgram && (
-              <div className={`pt-1 md:pt-2 border-t border-white/10 ${isMobile ? 'mt-1' : 'mt-2'}`}>
-                <div className="flex items-center gap-1 md:gap-2 mb-0.5 md:mb-1">
-                  <ArrowRight className={`text-yellow-300 ${isMobile ? 'h-2 w-2' : 'h-4 w-4'}`} />
-                  <span className={`text-yellow-300 font-bold ${isMobile ? 'text-[8px]' : 'text-xs'} uppercase tracking-wider`}>
-                    Up Next
-                  </span>
-                </div>
-                <p className={`text-white/80 ${isMobile ? 'text-[10px] leading-tight' : 'text-sm'} line-clamp-1`}>
-                  {nextProgram.title}
-                </p>
-              </div>
-            )}
-          </div>
+            {/* Up Next - Just name */}
+            {/* {nextProgram && (
+              // <div className={`pt-0.5 md:pt-1 border-t border-white/10 ${isMobile ? 'mt-1' : 'mt-1.5'}`}>
+              //   <div className="flex items-center gap-1 md:gap-2 mb-0.5">
+              //     <ArrowRight className={`text-yellow-300 ${isMobile ? 'h-2 w-2' : 'h-3 w-3'}`} />
+              //     <span className={`text-yellow-300 font-bold ${isMobile ? 'text-[8px]' : 'text-xs'} uppercase tracking-wider`}>
+              //       Up Next
+              //     </span>
+              //   </div>
+              //   <p className={`text-white/80 ${isMobile ? 'text-[10px] leading-tight' : 'text-sm'} line-clamp-1`}>
+              //     {nextProgram.title}
+              //   </p>
+              // </div>
+            )} */}
+          {/* </div> */}
         </motion.div>
       )}
     </AnimatePresence>
@@ -429,7 +432,7 @@ const DeeniLogo = ({ isMobile = false }: { isMobile?: boolean }) => {
       className="flex items-center"
     >
       <img 
-        src="/DeeniTV.svg" 
+        src="/DeeniTV-V-2.png" 
         alt="Deeni.tv"
         className={isMobile ? 'h-4' : 'h-6'}
       />
@@ -657,7 +660,10 @@ export function SyncedVideoPlayer({
   showStartModal = false,
   onStartClick,
   openHistoryModal = false,
-  onHistoryModalClose
+  onHistoryModalClose,
+  onOpenSchedule,
+  openChannelSelectorModal = false,
+  onChannelSelectorModalClose
 }: SyncedVideoPlayerProps) {
   // UI State
   const [showControls, setShowControls] = useState(true)
@@ -707,6 +713,14 @@ export function SyncedVideoPlayer({
   const timeUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const videoEndTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const isTransitioningRef = useRef(false)
+  // "Latest value" refs — used inside syncWithServer so we don't need those values
+  // in the useCallback dependency array (which would reset the 5-min interval on each video change)
+  const currentProgramRef = useRef<VideoProgram | null>(null)
+  const upcomingVideosRef = useRef<VideoProgram[]>([])
+  // playNextVideoRef — always holds the latest playNextVideo closure.
+  // onStateChange (ENDED) and the time-update check both call this so they always
+  // advance the CURRENT queue, not the stale one captured at initializePlayer time.
+  const playNextVideoRef = useRef<() => void>(() => {})
   
   // YouTube player hook
   const { 
@@ -730,6 +744,11 @@ export function SyncedVideoPlayer({
     }
   }, [currentChannelId])
 
+  // Keep "latest value" refs in sync — allows syncWithServer to read current state
+  // without being in its dependency array (which would reset the 5-min interval)
+  useEffect(() => { currentProgramRef.current = currentProgram }, [currentProgram])
+  useEffect(() => { upcomingVideosRef.current = upcomingVideos }, [upcomingVideos])
+
   // Update showStartScreen when prop changes
   useEffect(() => {
     setShowStartScreen(showStartModal)
@@ -741,6 +760,13 @@ export function SyncedVideoPlayer({
       setShowPreviousModal(true)
     }
   }, [openHistoryModal, showPreviousModal])
+
+  // Handle external openChannelSelectorModal trigger (from 3-dot menu)
+  useEffect(() => {
+    if (openChannelSelectorModal && !showChannelSelector) {
+      setShowChannelSelector(true)
+    }
+  }, [openChannelSelectorModal, showChannelSelector])
 
   // Update currentChannelId when initialChannelId changes
   useEffect(() => {
@@ -774,25 +800,38 @@ export function SyncedVideoPlayer({
     setDisplayTime(formatTime(startTime))
     setVideoDuration(nextProgram.duration)
     
-    // Find the next next program
-    const programs = getChannelPrograms(currentChannelId)
-    const currentIndex = programs.findIndex(p => p.id === nextProgram.id)
-    const nextNextIndex = (currentIndex + 1) % programs.length
-    const nextNextProgram = programs[nextNextIndex]
-    setNextProgram(nextNextProgram)
+    // Shift the API-populated upcoming queue: nextProgram is now playing,
+    // so remove it from the front and promote the rest
+    const newUpcomingQueue = upcomingVideos.slice(1)
+    const newNextProgram = newUpcomingQueue[0] || null
+
+    if (newNextProgram) {
+      // Still have API queue items
+      setNextProgram(newNextProgram)
+      setUpcomingVideos(newUpcomingQueue)
+    } else {
+      // API queue exhausted — fall back to local schedule data
+      const programs = getChannelPrograms(currentChannelId)
+      const currentIndex = programs.findIndex(p => p.id === nextProgram.id)
+      if (programs.length > 0 && currentIndex >= 0) {
+        const fallbackNext = programs[(currentIndex + 1) % programs.length]
+        setNextProgram(fallbackNext)
+        const fallbackUpcoming: VideoProgram[] = []
+        for (let i = 1; i <= 15; i++) {
+          fallbackUpcoming.push(programs[(currentIndex + i) % programs.length])
+        }
+        setUpcomingVideos(fallbackUpcoming)
+      } else {
+        setNextProgram(null)
+        setUpcomingVideos([])
+      }
+    }
     
     // Update cycle info
     setCycleInfo(prev => ({ 
-      current: (prev.current % prev.total) + 1, 
+      current: prev.total > 0 ? (prev.current % prev.total) + 1 : 1, 
       total: prev.total 
     }))
-    
-    // Update upcoming videos list
-    const newUpcoming: VideoProgram[] = []
-    for (let i = 1; i <= 15; i++) {
-      newUpcoming.push(programs[(currentIndex + i) % programs.length])
-    }
-    setUpcomingVideos(newUpcoming)
     
     // Clear any existing timeout
     if (videoEndTimeoutRef.current) {
@@ -826,7 +865,12 @@ export function SyncedVideoPlayer({
       isTransitioningRef.current = false
     }
     
-  }, [currentProgram, nextProgram, currentChannelId, loadVideo, volume, isMuted, setYouTubeVolume, setYouTubeMuted, play, getDuration])
+  }, [currentProgram, nextProgram, currentChannelId, upcomingVideos, loadVideo, volume, isMuted, setYouTubeVolume, setYouTubeMuted, play, getDuration])
+
+  // Keep playNextVideoRef always pointing at the freshest closure.
+  // onStateChange (ENDED) and updateTimeDisplay both call this so they always
+  // advance the CURRENT queue, never a stale one captured at initializePlayer time.
+  useEffect(() => { playNextVideoRef.current = playNextVideo }, [playNextVideo])
 
   // Update time display - uses actual video time from YouTube
   const updateTimeDisplay = useCallback(() => {
@@ -852,11 +896,11 @@ export function SyncedVideoPlayer({
         if (videoEndTimeoutRef.current) {
           clearTimeout(videoEndTimeoutRef.current)
         }
-        // Play next video immediately
-        playNextVideo()
+        // Use ref so we always call the latest closure (queue already shifted correctly)
+        playNextVideoRef.current()
       }
     }
-  }, [currentProgram, getCurrentTime, getDuration, videoDuration, nextProgram, playNextVideo])
+  }, [currentProgram, getCurrentTime, getDuration, videoDuration, nextProgram])
 
   const loadChannel = useCallback(async (channelId: string) => {
     if (isLoading) return
@@ -958,8 +1002,14 @@ export function SyncedVideoPlayer({
       }))
       setUpcomingVideos(upcoming)
       
-      // Set previous videos from API response (if available) - merge with existing localStorage
-      if (result.previousPrograms && result.previousPrograms.length > 0) {
+      // Previous videos: localStorage (real user history) always takes priority.
+      // API previousPrograms are only schedule-calculated — treat them as optional extras.
+      const existingPrevious = getPreviousVideos(channelId)
+      if (existingPrevious.length > 0) {
+        // User has real watch history — use it as-is, don't let API overwrite order
+        setPreviousVideos(existingPrevious)
+      } else if (result.previousPrograms && result.previousPrograms.length > 0) {
+        // No local history yet — seed from API schedule data as a starting point
         const apiPrevious: VideoProgram[] = result.previousPrograms.map((prog: { ytVideoId: string; title: string; duration: number }) => ({
           id: prog.ytVideoId,
           videoId: prog.ytVideoId,
@@ -971,28 +1021,8 @@ export function SyncedVideoPlayer({
           channelId: channelId,
           thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
         }))
-        
-        // Merge with existing localStorage data (API data takes precedence)
-        const existingPrevious = getPreviousVideos(channelId)
-        const mergedPrevious = [...apiPrevious]
-        
-        // Add any videos from localStorage that aren't in API response
-        existingPrevious.forEach(existing => {
-          if (!apiPrevious.find(p => p.id === existing.id)) {
-            mergedPrevious.push(existing)
-          }
-        })
-        
-        // Keep only last 30 videos
-        const finalPrevious = mergedPrevious.slice(0, 30)
-        setPreviousVideos(finalPrevious)
-        savePreviousVideos(channelId, finalPrevious)
-      } else {
-        // If API doesn't return previousPrograms, keep localStorage data
-        const existingPrevious = getPreviousVideos(channelId)
-        if (existingPrevious.length > 0) {
-          setPreviousVideos(existingPrevious)
-        }
+        setPreviousVideos(apiPrevious.slice(0, 30))
+        savePreviousVideos(channelId, apiPrevious.slice(0, 30))
       }
       
       lastVideoIdRef.current = program.videoId
@@ -1039,7 +1069,8 @@ export function SyncedVideoPlayer({
               if (videoEndTimeoutRef.current) {
                 clearTimeout(videoEndTimeoutRef.current)
               }
-              playNextVideo()
+              // Use ref so we always call the LATEST closure (not the stale one from init)
+              playNextVideoRef.current()
             } else if (state === YT_STATE.PLAYING) {
               console.log('▶️ Video is now playing')
               setShowStartScreen(false) // Ensure start screen is hidden
@@ -1105,7 +1136,8 @@ export function SyncedVideoPlayer({
               if (videoEndTimeoutRef.current) {
                 clearTimeout(videoEndTimeoutRef.current)
               }
-              playNextVideo()
+              // Use ref so we always call the LATEST closure (not the stale one from init)
+              playNextVideoRef.current()
             } else if (state === YT_STATE.PLAYING) {
               console.log('▶️ Video is now playing')
             } else if (state === YT_STATE.PAUSED) {
@@ -1142,7 +1174,7 @@ export function SyncedVideoPlayer({
       setApiError(error instanceof Error ? error.message : 'Failed to load video')
       setIsLoading(false)
     }
-  }, [isLoading, playerReady, volume, initializePlayer, loadVideo, seekTo, play, setYouTubeVolume, setYouTubeMuted, onChannelChange, onStartClick, getDuration, playNextVideo])
+  }, [isLoading, playerReady, volume, initializePlayer, loadVideo, seekTo, play, setYouTubeVolume, setYouTubeMuted, onChannelChange, onStartClick, getDuration])
 
   const handleFirstTimeStart = useCallback(() => {
     if (!currentChannelId) {
@@ -1175,76 +1207,66 @@ export function SyncedVideoPlayer({
       
       const result = await response.json()
       
-      // Handle new API format
+      // Update server time offset
       if (result.serverTime) {
         const offset = result.serverTime - Date.now()
         setServerTimeOffset(offset)
       }
       
-      // Update upcoming videos from API
+      // ── Previous videos: always use localStorage order (real user history) ──
+      const latestPrevious = getPreviousVideos(currentChannelId)
+      if (latestPrevious.length > 0) {
+        setPreviousVideos(latestPrevious)
+      }
+      
+      // ── Upcoming queue: smart update — DO NOT blast the whole list every sync ──
+      // Only update if:
+      //   A) The server's current video differs from what's locally playing (drift), OR
+      //   B) The local queue is empty (exhausted)
+      // Otherwise leave the queue alone — it shifts naturally one-at-a-time via playNextVideo()
       if (result.upcomingPrograms && Array.isArray(result.upcomingPrograms)) {
-        console.log('📋 Syncing upcoming videos:', result.upcomingPrograms.length, 'videos')
-        const upcoming: VideoProgram[] = result.upcomingPrograms.map((prog: { ytVideoId: string; title: string; duration: number }) => ({
-          id: prog.ytVideoId,
-          videoId: prog.ytVideoId,
-          title: prog.title,
-          description: prog.title,
-          duration: prog.duration,
-          category: 'Lecture',
-          language: 'Bengali',
-          channelId: currentChannelId,
-          thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
-        }))
-        setUpcomingVideos(upcoming)
-      }
-      
-      // Update next program
-      if (result.upcomingPrograms && result.upcomingPrograms.length > 0) {
-        const nextProg = result.upcomingPrograms[0]
-        const nextProgram: VideoProgram = {
-          id: nextProg.ytVideoId,
-          videoId: nextProg.ytVideoId,
-          title: nextProg.title,
-          description: nextProg.title,
-          duration: nextProg.duration,
-          category: 'Lecture',
-          language: 'Bengali',
-          channelId: currentChannelId,
-          thumbnail: `https://img.youtube.com/vi/${nextProg.ytVideoId}/maxresdefault.jpg`
+        const apiCurrentId  = result.currentProgram?.ytVideoId
+        const localCurrentId = currentProgramRef.current?.videoId
+        const hasDrifted    = !!(apiCurrentId && localCurrentId && apiCurrentId !== localCurrentId)
+        const queueEmpty    = upcomingVideosRef.current.length === 0
+
+        if (hasDrifted) {
+          // Player has drifted from the broadcast schedule — hard-resync
+          console.log('⚠️ Player drifted from server schedule. Resyncing queue...')
+          const upcoming: VideoProgram[] = result.upcomingPrograms.map((prog: { ytVideoId: string; title: string; duration: number }) => ({
+            id: prog.ytVideoId,
+            videoId: prog.ytVideoId,
+            title: prog.title,
+            description: prog.title,
+            duration: prog.duration,
+            category: 'Lecture',
+            language: 'Bengali',
+            channelId: currentChannelId,
+            thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
+          }))
+          setUpcomingVideos(upcoming)
+          if (upcoming[0]) setNextProgram(upcoming[0])
+        } else if (queueEmpty) {
+          // Local queue is exhausted — refill from API so playback can continue
+          console.log('📋 Queue exhausted — refilling from server...')
+          const upcoming: VideoProgram[] = result.upcomingPrograms.map((prog: { ytVideoId: string; title: string; duration: number }) => ({
+            id: prog.ytVideoId,
+            videoId: prog.ytVideoId,
+            title: prog.title,
+            description: prog.title,
+            duration: prog.duration,
+            category: 'Lecture',
+            language: 'Bengali',
+            channelId: currentChannelId,
+            thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
+          }))
+          setUpcomingVideos(upcoming)
+          if (upcoming[0]) setNextProgram(upcoming[0])
+        } else {
+          // In sync and queue has items — leave it untouched
+          // The queue shifts naturally one video at a time via playNextVideo()
+          console.log('✅ In sync with server — queue intact, no changes')
         }
-        setNextProgram(nextProgram)
-      }
-      
-      // Update previous videos from API if available
-      if (result.previousPrograms && result.previousPrograms.length > 0) {
-        console.log('📋 Syncing previous videos:', result.previousPrograms.length, 'videos')
-        const apiPrevious: VideoProgram[] = result.previousPrograms.map((prog: { ytVideoId: string; title: string; duration: number }) => ({
-          id: prog.ytVideoId,
-          videoId: prog.ytVideoId,
-          title: prog.title,
-          description: prog.title,
-          duration: prog.duration,
-          category: 'Lecture',
-          language: 'Bengali',
-          channelId: currentChannelId,
-          thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
-        }))
-        
-        // Merge with existing localStorage data
-        const existingPrevious = getPreviousVideos(currentChannelId)
-        const mergedPrevious = [...apiPrevious]
-        
-        // Add any videos from localStorage that aren't in API response
-        existingPrevious.forEach(existing => {
-          if (!apiPrevious.find(p => p.id === existing.id)) {
-            mergedPrevious.push(existing)
-          }
-        })
-        
-        // Keep only last 30 videos
-        const finalPrevious = mergedPrevious.slice(0, 30)
-        setPreviousVideos(finalPrevious)
-        savePreviousVideos(currentChannelId, finalPrevious)
       }
       
     } catch (error) {
@@ -1253,18 +1275,26 @@ export function SyncedVideoPlayer({
   }, [playerReady, currentChannelId])
 
   const handleReload = useCallback(() => {
-    console.log('🔄 Reloading...')
-    setShowStartScreen(true)
+    if (!currentChannelId) return
+    console.log('🔄 Reloading channel:', currentChannelId)
+    
+    // Save currently-playing video to history BEFORE reload so it appears in the list
+    if (currentProgram) {
+      const updated = addToPreviousVideos(currentChannelId, currentProgram)
+      setPreviousVideos(updated)
+    }
+    
+    // Reset player state only — do NOT touch previousVideos or localStorage
     setPlayerReady(false)
     setCurrentProgram(null)
-    setCurrentChannelId('')
     setApiError(null)
     destroy()
     
+    // Reload same channel — previousVideos state and localStorage are preserved
     setTimeout(() => {
-      setShowStartScreen(true)
-    }, 100)
-  }, [destroy])
+      loadChannel(currentChannelId)
+    }, 200)
+  }, [destroy, currentChannelId, currentProgram, loadChannel])
 
   // Handle playing from previous videos
   const handlePlayFromPrevious = useCallback((video: VideoProgram) => {
@@ -1635,7 +1665,6 @@ export function SyncedVideoPlayer({
                     <div className="relative h-full flex items-center px-2 md:px-4">
                       {/* Left Section - Deeni.tv Logo */}
                       <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-                        <DeeniLogo isMobile={isMobile} />
                       </div>
 
                       {/* Desktop Ticker - 360-degree infinite scroll */}
@@ -1643,6 +1672,7 @@ export function SyncedVideoPlayer({
                         <>
                           <div className="flex-1 min-w-0 overflow-hidden mx-4">
                             <DesktopTicker 
+                              key={currentProgram.id}
                               videos={upcomingVideos} 
                               currentIndex={cycleInfo.current - 1}
                               totalPrograms={cycleInfo.total}
@@ -1688,6 +1718,7 @@ export function SyncedVideoPlayer({
                           {/* Ticker takes most of the width */}
                           <div className="flex-1 min-w-0 overflow-hidden ml-1">
                             <MobileTicker 
+                              key={currentProgram.id}
                               videos={upcomingVideos} 
                               currentIndex={cycleInfo.current - 1}
                               totalPrograms={cycleInfo.total}
@@ -1729,50 +1760,22 @@ export function SyncedVideoPlayer({
                   isMobile ? 'px-3 py-2' : 'px-6 py-4'
                 }`}>
                   <div className="flex items-center justify-between gap-2 md:gap-4">
-                    {/* Volume Control */}
-                    <motion.div 
-                      whileHover={{ scale: 1.02 }}
-                      className={`flex items-center gap-2 md:gap-3 ${
-                        isMobile ? 'flex-1 max-w-[140px]' : 'flex-1 max-w-[230px]'
-                      } bg-white/10 backdrop-blur-sm rounded-full px-2 py-0.5 md:px-3 md:py-1 border border-white/20`}
-                    >
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={toggleMute} 
-                        className={`text-white/90 hover:bg-white/20 rounded-full ${
-                          isMobile ? 'h-7 w-7' : 'h-9 w-9'
-                        }`}
-                      >
-                        {getVolumeIcon()}
-                      </Button>
-                      <div className="flex-1 relative">
-                        {showVolumeTooltip && (
-                          <motion.div 
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className={`absolute -top-8 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-sm text-white ${
-                              isMobile ? 'text-[10px] px-2 py-1' : 'text-xs px-3 py-1.5'
-                            } rounded-full border border-white/10 shadow-lg whitespace-nowrap`}
-                          >
-                            {volume}%
-                          </motion.div>
-                        )}
-                        <Slider 
-                          value={[volume]} 
-                          onValueChange={handleVolumeChange} 
-                          max={100} 
-                          step={1} 
-                          className="h-2 [&_[role=slider]]:bg-primary [&_[role=slider]]:border-2 [&_[role=slider]]:border-white/20 [&_[role=slider]]:h-4 [&_[role=slider]]:w-4"
-                        />
-                      </div>
-                    </motion.div>
+                    {/* Logo Section - Replaces sound bar */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <img 
+                        src="/DeeniTV-V-2.png" 
+                        alt="Deeni.tv"
+                        className={isMobile ? 'h-5' : 'h-7'}
+                      />
+                    </div>
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-1 md:gap-2">
                       {[
-                        { icon: Globe, onClick: handleOpenChannelSelector, title: 'Change Channel' },
-                        { icon: showTicker ? EyeOff : Eye, onClick: () => setShowTicker(!showTicker), title: showTicker ? 'Hide Ticker' : 'Show Ticker' },
+                        { icon: Globe, onClick: () => handleOpenChannelSelector(), title: 'Change Channel' },
+                        { icon: Calendar, onClick: () => onOpenSchedule?.(), title: 'Schedule' },
+                        /* Eye icon removed per requirements */
+                        /* { icon: showTicker ? EyeOff : Eye, onClick: () => setShowTicker(!showTicker), title: showTicker ? 'Hide Ticker' : 'Show Ticker' }, */
                         { icon: RefreshCw, onClick: handleReload, title: 'Reload' },
                         { icon: History, onClick: () => setShowPreviousModal(true), title: 'Previously Watched' },
                         { icon: MoreHorizontal, onClick: onMenuOpen, title: 'Menu' },
@@ -1807,13 +1810,13 @@ export function SyncedVideoPlayer({
       {/* Channel Selector Modal */}
       <ChannelSelectorModal
         isOpen={showChannelSelector}
-        onClose={() => setShowChannelSelector(false)}
+        onClose={() => { setShowChannelSelector(false); onChannelSelectorModalClose?.() }}
         channels={channels}
         onSelectChannel={handleSelectChannel}
         currentChannelId={currentChannelId}
       />
 
-      {/* Previous Videos Modal - Pause main player when watching */}
+      {/* Previous Videos Modal - Mute main player when watching, unmute when done */}
       <PreviousVideosModal
         isOpen={showPreviousModal}
         onClose={() => {
@@ -1824,15 +1827,18 @@ export function SyncedVideoPlayer({
         onPlayVideo={handlePlayFromPrevious}
         currentChannelId={currentChannelId}
         onPauseMainPlayer={() => {
-          // Destroy main player when watching from history
-          destroy()
+          // MUTE main player when watching from history (don't destroy)
+          setYouTubeMuted(true)
+          setIsMuted(true)
           setMainPlayerPaused(true)
         }}
         onResumeMainPlayer={() => {
-          // Show start screen to restart live
+          // UNMUTE main player when history video closes
+          setYouTubeMuted(false)
+          setIsMuted(false)
           setMainPlayerPaused(false)
-          setShowStartScreen(true)
-          setPlayerReady(false)
+          // Do NOT close the previously watched modal - it stays open
+          // Do NOT reload or restart the live TV
         }}
       />
     </div>
