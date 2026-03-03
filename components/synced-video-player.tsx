@@ -363,7 +363,7 @@ const BrandedLoadingOverlay = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="absolute inset-0 z-[45] flex flex-col items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black"
+          className="absolute inset-0 z-[55] flex flex-col items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black"
         >
           {/* Background pattern */}
           <div className="absolute inset-0 opacity-5">
@@ -1201,6 +1201,11 @@ export function SyncedVideoPlayer({
       setTimeRemaining(formatTime(timeRemaining))
       setVideoDuration(program.duration)
       
+      // Show branded overlay with the now-known program title
+      // (covers both first-Start-click and mid-session channel-switch cases)
+      brandedOverlayProgramRef.current = program.title
+      setShowBrandedOverlay(true)
+      
       // Get next program from upcomingPrograms
       if (result.upcomingPrograms && result.upcomingPrograms.length > 0) {
         const nextProg = result.upcomingPrograms[0]
@@ -1439,6 +1444,10 @@ export function SyncedVideoPlayer({
     if (!currentChannelId) {
       setShowChannelSelector(true)
     } else {
+      // Immediately replace start screen with branded loading overlay
+      setShowStartScreen(false)
+      brandedOverlayProgramRef.current = ''
+      setShowBrandedOverlay(true)
       loadChannel(currentChannelId)
     }
   }, [currentChannelId, loadChannel])
@@ -1578,7 +1587,9 @@ export function SyncedVideoPlayer({
     
     console.log('▶️ Playing from previous list:', video.title)
     
-    // No branded overlay for previous-video clicks — only on auto-play transitions
+    // Show branded overlay for watched-video clicks
+    brandedOverlayProgramRef.current = video.title
+    setShowBrandedOverlay(true)
     
     // Add current video to previous before switching
     if (currentProgram) {
@@ -1794,9 +1805,9 @@ export function SyncedVideoPlayer({
           <div ref={youtubeContainerRef} className="absolute inset-0 w-full h-full" />
           <div className="absolute inset-0 w-full h-full pointer-events-auto" />
           
-          {/* Branded Loading Overlay - Shows during YouTube loading, hides on PLAYING event */}
+          {/* Branded Loading Overlay - Shows on: Start click, next video, watched video, channel load */}
           <BrandedLoadingOverlay
-            isVisible={showBrandedOverlay && !showStartScreen && !isLoading}
+            isVisible={showBrandedOverlay}
             programName={brandedOverlayProgramRef.current || currentProgram?.title || ''}
           />
           
