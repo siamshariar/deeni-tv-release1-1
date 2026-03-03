@@ -59,10 +59,10 @@
   ],
   "id": "/?source=pwa",
   "start_url": "/?source=pwa",
-  "background_color": "#0f172a",
+  "background_color": "#09090b",
   "display": "standalone",
   "scope": "/",
-  "theme_color": "#13b589",
+  "theme_color": "#16a34a",
   "description": "Experience premium spiritual content in a cinematic lean-back TV interface. Watch Islamic lectures, Ramadan guides, and more in a synchronized TV-like experience.",
   "lang": "en",
   "categories": [
