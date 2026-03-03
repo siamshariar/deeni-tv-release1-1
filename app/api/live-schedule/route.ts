@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { fetchWithAuth } from '@/lib/fetch'
 
 const EXTERNAL_API_BASE = 'https://api.deeniinfotech.com/api/tv-schedules'
 
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
       apiUrl += '&IS=true'
     }
     
-    console.log(`📡 Fetching from external API: ${apiUrl}`)
+    console.log(`📡 Fetching from external API with JWT auth: ${apiUrl}`)
     
     const apiKey = process.env.NP_AS_L
     if (!apiKey) {
@@ -42,26 +43,8 @@ export async function GET(request: Request) {
       )
     }
     
-    const response = await fetch(apiUrl, {
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-cache',
-      },
-      // Don't cache this
-      cache: 'no-store',
-    })
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error(`❌ External API error: ${response.status} - ${errorText}`)
-      return NextResponse.json(
-        { error: `External API error: ${response.status}`, details: errorText },
-        { status: response.status }
-      )
-    }
-    
-    const data = await response.json()
+    // Use JWT-authenticated fetch (same pattern as Quran Tube)
+    const data = await fetchWithAuth(apiUrl)
     console.log('✅ External API response received:', JSON.stringify(data).substring(0, 200))
     
     // Transform external API response to our internal format
