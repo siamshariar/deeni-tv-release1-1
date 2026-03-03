@@ -209,71 +209,109 @@ const VideoPlayerModal = ({
             className="fixed inset-0 bg-black z-[80]"
           />
           
-          {/* Fullscreen Player */}
+          {/* Fullscreen Player - Same layout as live TV player */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[90] flex flex-col"
+            className="fixed inset-0 z-[90] flex items-center justify-center bg-gradient-to-br from-zinc-950 via-zinc-900 to-black"
           >
-            {/* Header with back and close buttons */}
-            <div className="absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/90 to-transparent p-4 md:p-6">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onClose}
-                  className={`text-white hover:bg-white/20 rounded-full bg-white/10 backdrop-blur-sm ${
-                    isMobile ? 'h-10 w-10' : 'h-9 w-9'
-                  }`}
-                >
-                  <ArrowLeft className={isMobile ? 'h-5 w-5' : 'h-4 w-4'} />
-                </Button>
-                  <div className="flex-1 min-w-0">
-                    <h3 className={`text-white font-bold truncate ${isMobile ? 'text-base' : 'text-lg'}`}>
-                      {video.title}
-                    </h3>
-                    <p className="text-white/60 text-xs md:text-sm">
-                      {formatDuration(video.duration)}
-                    </p>
+            {/* Centered container matching live TV iframe sizing */}
+            <div className={`relative w-full ${
+              isMobile ? 'w-full' : 'md:w-[70vw] md:max-w-[1400px]'
+            }`}>
+              {/* Video title bar - ABOVE the iframe, inside the container */}
+              <div className={`w-full bg-black/80 backdrop-blur-xl border border-white/10 border-b-0 rounded-t-2xl md:rounded-t-3xl ${
+                isMobile ? 'px-3 py-2' : 'px-4 py-3'
+              }`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onClose}
+                      className={`text-white hover:bg-white/20 rounded-full bg-white/10 backdrop-blur-sm flex-shrink-0 ${
+                        isMobile ? 'h-8 w-8' : 'h-9 w-9'
+                      }`}
+                    >
+                      <ArrowLeft className={isMobile ? 'h-4 w-4' : 'h-4 w-4'} />
+                    </Button>
+                    <div className="flex-1 min-w-0">
+                      <h3 className={`text-white font-bold truncate ${isMobile ? 'text-sm' : 'text-base'}`}>
+                        {video.title}
+                      </h3>
+                      <p className="text-white/60 text-[10px] md:text-xs">
+                        {formatDuration(video.duration)}
+                      </p>
+                    </div>
                   </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onClose}
+                    className={`text-white hover:bg-white/20 rounded-full bg-white/10 backdrop-blur-sm flex-shrink-0 ${
+                      isMobile ? 'h-8 w-8' : 'h-9 w-9'
+                    }`}
+                  >
+                    <X className={isMobile ? 'h-4 w-4' : 'h-5 w-5'} />
+                  </Button>
                 </div>
-                
-                {/* Close button - Smaller */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onClose}
-                  className={`text-white hover:bg-white/20 rounded-full bg-white/10 backdrop-blur-sm ${
-                    isMobile ? 'h-12 w-12' : 'h-10 w-10'
-                  }`}
-                >
-                  <X className={isMobile ? 'h-6 w-6' : 'h-5 w-5'} />
-                </Button>
+              </div>
+              
+              {/* Video iframe - Same aspect-video as live TV player */}
+              <div className="relative w-full aspect-video bg-black overflow-hidden border-x border-white/10 select-none">
+                <iframe
+                  ref={iframeRef}
+                  src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
+                  className="absolute inset-0 w-full h-full pointer-events-none"
+                  allow="autoplay; encrypted-media; fullscreen"
+                  allowFullScreen
+                />
+              </div>
+              
+              {/* Bottom controls bar - matching live TV bottom bar */}
+              <div className={`w-full bg-black/60 backdrop-blur-xl border border-white/10 border-t-0 rounded-b-2xl md:rounded-b-3xl ${
+                isMobile ? 'px-3 py-2' : 'px-4 py-3'
+              }`}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <img 
+                      src="/DeeniTV-V-2.png" 
+                      alt="Deeni.tv"
+                      className={isMobile ? 'h-4' : 'h-6'}
+                    />
+                  </div>
+                  {/* <div className="flex items-center gap-1 md:gap-2"> */}
+                    {/* Volume toggle */}
+                    {/* <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={toggleMute}
+                      className={`text-white/90 hover:bg-white/20 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 ${
+                        isMobile ? 'h-7 w-7' : 'h-9 w-9'
+                      }`}
+                      title={isMuted ? 'Unmute' : 'Mute'}
+                    >
+                      {getVolumeIcon()}
+                    </Button> */}
+                    {/* Close button */}
+                    {/* <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={onClose}
+                      className={`text-white/90 hover:bg-white/20 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 ${
+                        isMobile ? 'h-7 w-7' : 'h-9 w-9'
+                      }`}
+                      title="Close"
+                    >
+                      <X className={isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
+                    </Button> */}
+                  {/* </div> */}
+                </div>
               </div>
             </div>
-            
-            {/* Video iframe - No YouTube controls, no click interaction */}
-            <div className="flex-1 flex items-center justify-center bg-black relative select-none">
-              <iframe
-                ref={iframeRef}
-                src={`https://www.youtube.com/embed/${video.videoId}?autoplay=1&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3&disablekb=1&enablejsapi=1&origin=${typeof window !== 'undefined' ? window.location.origin : ''}`}
-                className={`${isMobile ? 'w-full h-full' : 'w-full h-full max-h-[80vh]'} pointer-events-none`}
-                allow="autoplay; encrypted-media; fullscreen"
-                allowFullScreen
-              />
-              
-              {/* Breaking News Style Ticker - Above bottom controls */}
-              <BreakingNewsTicker 
-                videos={allVideos} 
-                currentVideoId={video.id} 
-              />
-            </div>
-            
-            {/* Bottom Controls - Volume */}
-
           </motion.div>
         </>
       )}

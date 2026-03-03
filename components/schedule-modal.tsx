@@ -24,6 +24,11 @@ export function ScheduleModal({ isOpen, onClose, schedule, currentProgramId }: S
     return index >= currentIndex
   })
 
+  // The first item in filteredSchedule that matches currentProgramId is "Now Playing".
+  // Using filteredIndex (position in filtered list) ensures only ONE item gets the badge,
+  // even when the same video ID appears multiple times in the schedule.
+  const nowPlayingFilteredIndex = filteredSchedule.findIndex(p => p.id === currentProgramId)
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -69,11 +74,14 @@ export function ScheduleModal({ isOpen, onClose, schedule, currentProgramId }: S
             <div className="overflow-y-auto max-h-[calc(80vh-80px)] p-4">
               <div className="space-y-2">
                 {filteredSchedule.map((program, index) => {
-                  const isCurrent = program.id === currentProgramId
+                  // Only the FIRST occurrence of the current ID gets the Now Playing badge
+                  const isCurrent = index === nowPlayingFilteredIndex
+                  // Up Next is the item immediately after the Now Playing item
+                  const isUpNext = nowPlayingFilteredIndex >= 0 && index === nowPlayingFilteredIndex + 1
                   
                   return (
                     <motion.div
-                      key={program.id}
+                      key={`${program.id}-${index}`}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
@@ -91,7 +99,7 @@ export function ScheduleModal({ isOpen, onClose, schedule, currentProgramId }: S
                                 Now Playing
                               </span>
                             )}
-                            {!isCurrent && index === 1 && (
+                            {!isCurrent && isUpNext && (
                               <span className="px-2 py-0.5 text-xs font-medium bg-yellow-500/20 text-yellow-300 rounded-full">
                                 Up Next
                               </span>

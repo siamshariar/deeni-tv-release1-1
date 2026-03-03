@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Slider } from '@/components/ui/slider'
 import { useMediaQuery } from '@/hooks/use-media-query'
 import { CurrentVideoData, VideoProgram, Channel } from '@/types/schedule'
+import { clientFetchWithAuth } from '@/lib/client-fetch'
 import { 
   formatTime, 
   CHANNELS, 
@@ -28,6 +29,8 @@ import {
   saveChannel,
   addToPreviousVideos,
   getPreviousVideos,
+  CHANNEL_LID_MAP,
+  isQuranChannel,
   savePreviousVideos,
   STORAGE_KEY
 } from '@/lib/schedule-utils'
@@ -45,6 +48,8 @@ interface SyncedVideoPlayerProps {
   onOpenSchedule?: () => void
   openChannelSelectorModal?: boolean
   onChannelSelectorModalClose?: () => void
+  /** Called whenever the current program / schedule changes (video transition, API sync, etc.) */
+  onProgramChange?: (currentProgramId: string, schedule: VideoProgram[]) => void
 }
 
 // Channel Selector Modal Component
@@ -193,7 +198,7 @@ const ChannelSelectorModal = ({
   )
 }
 
-// Start Screen Component
+// Start Screen Component - Fully responsive for all screen sizes
 const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
   const isMobile = useMediaQuery('(max-width: 640px)')
   const isTablet = useMediaQuery('(min-width: 641px) and (max-width: 1024px)')
@@ -203,152 +208,133 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-900 to-black z-50"
+      className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-900 to-black z-50 overflow-hidden"
     >
       <motion.div
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         transition={{ type: "spring", damping: 20, stiffness: 200 }}
-        className="w-full h-full flex items-center justify-center"
+        className="w-full h-full flex items-center justify-center p-4 sm:p-6 md:p-8"
       >
-        <div className={`w-full ${
-          isMobile ? 'max-w-sm px-4' : 
-          isTablet ? 'max-w-2xl px-6' : 
-          'max-w-4xl px-8'
-        }`}>
-          <div className="text-center">
-            {/* App Logo with Animation */}
+        <div className="w-full max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl flex flex-col items-center gap-2 sm:gap-3 md:gap-4">
+          {/* App Logo with Animation */}
+          <div className="relative flex items-center justify-center">
             <div className={`relative flex items-center justify-center ${
-              isMobile ? 'mb-0.5 p-0' : ' p-8'
+              isMobile ? 'w-16 h-16' : isTablet ? 'w-24 h-24' : 'w-32 h-32'
             }`}>
-              <div className={`relative flex items-center justify-center ${
-                isMobile ? 'w-24 h-24' : isTablet ? 'w-36 h-36' : 'w-44 h-44'
-              }`}>
-                <motion.div
-                  animate={{ 
-                    rotate: 360,
-                    scale: isMobile ? [1, 1.02, 1] : [1, 1.05, 1],
-                  }}
-                  transition={{ 
-                    rotate: { duration: 3, repeat: Infinity, ease: "linear" },
-                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                  }}
-                  className="relative flex items-center justify-center"
-                >
-                  <div className={`absolute rounded-full bg-primary/20 blur-xl animate-pulse ${
-                    isMobile ? 'w-16 h-16' : isTablet ? 'w-24 h-24' : 'w-32 h-32'
-                  }`} />
-                  <Radio className={`${
-                    isMobile ? 'h-12 w-12' : 
-                    isTablet ? 'h-18 w-18' : 
-                    'h-24 w-24'
-                  } text-primary relative z-10 flex-shrink-0`} />
-                  
-                  <motion.div
-                    animate={{ 
-                      y: ['-50%', '150%'],
-                    }}
-                    transition={{ 
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "linear",
-                    }}
-                    className="absolute inset-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm pointer-events-none"
-                  />
-                </motion.div>
-              </div>
-            </div>
-            
-            {/* Logo with full branding */}
-            <motion.div
-              className="flex items-center justify-center mb-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <img 
-                src="/DeeniTV-V-2.png" 
-                alt="Deeni.tv - Your Spiritual TV Experience"
-                className={isMobile ? 'h-10' : isTablet ? 'h-12' : 'h-14'}
-              />
-            </motion.div>
-            
-            <motion.p 
-              className={`text-white/60  ${
-                isMobile ? 'text-sm' : 
-                isTablet ? 'text-base' : 
-                'text-lg'
-              }`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              Your Spiritual TV Experience
-            </motion.p>
-            
-            {!isMobile && (
-              <motion.div 
-                className="flex flex-wrap items-center justify-center gap-2 mb-8 md:mb-10"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
+              <motion.div
+                animate={{ 
+                  rotate: 360,
+                  scale: [1, 1.03, 1],
+                }}
+                transition={{ 
+                  rotate: { duration: 3, repeat: Infinity, ease: "linear" },
+                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                }}
+                className="relative flex items-center justify-center"
               >
-                {[
-                  { icon: Zap, text: 'Live TV Experience' },
-                  { icon: Shield, text: '100% Halal Content' },
-                  { icon: Sparkles, text: 'Premium Quality' },
-                ].map((item, i) => (
-                  <motion.div
-                    key={i}
-                    whileHover={{ scale: 1.05 }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/5 rounded-full border border-white/10"
-                  >
-                    <item.icon className="h-3 w-3 text-primary" />
-                    <span className="text-xs text-white/80 whitespace-nowrap">{item.text}</span>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="flex justify-center"
-            >
-              <Button
-                onClick={onPlayClick}
-                size={isMobile ? 'default' : 'lg'}
-                className={`relative group bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white rounded-full shadow-2xl shadow-primary/30 overflow-hidden ${
-                  isMobile ? 'px-6 py-4 text-base' : 'px-8 py-6 text-lg'
-                }`}
-              >
-                <span className="relative z-10 flex items-center gap-3">
-                  <span className="font-bold">Start Watching</span>
-                </span>
+                <div className={`absolute rounded-full bg-primary/20 blur-xl animate-pulse ${
+                  isMobile ? 'w-12 h-12' : isTablet ? 'w-20 h-20' : 'w-28 h-28'
+                }`} />
+                <Radio className={`${
+                  isMobile ? 'h-8 w-8' : 
+                  isTablet ? 'h-14 w-14' : 
+                  'h-20 w-20'
+                } text-primary relative z-10 flex-shrink-0`} />
+                
                 <motion.div
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                  animate={{
-                    x: ['-100%', '100%'],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
+                  animate={{ y: ['-50%', '150%'] }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent blur-sm pointer-events-none"
                 />
-              </Button>
-            </motion.div>
-            
-            <motion.p 
-              className={`text-white/40 mt-1 ${isMobile ? 'text-[10px]' : 'text-xs'}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
-              Click to start your spiritual journey
-            </motion.p>
+              </motion.div>
+            </div>
           </div>
+          
+          {/* Logo with full branding */}
+          <motion.div
+            className="flex items-center justify-center"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <img 
+              src="/DeeniTV-V-2.png" 
+              alt="Deeni.tv - Your Spiritual TV Experience"
+              className={isMobile ? 'h-8' : isTablet ? 'h-10' : 'h-12'}
+            />
+          </motion.div>
+          
+          <motion.p 
+            className={`text-white/60 text-center ${
+              isMobile ? 'text-xs' : isTablet ? 'text-sm' : 'text-base'
+            }`}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            Your Spiritual TV Experience
+          </motion.p>
+          
+          {/* Feature badges - hidden on very small mobile, shown on larger */}
+          {!isMobile && (
+            <motion.div 
+              className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              {[
+                { icon: Zap, text: 'Live TV' },
+                { icon: Shield, text: 'Halal Content' },
+                { icon: Sparkles, text: 'Premium' },
+              ].map((item, i) => (
+                <motion.div
+                  key={i}
+                  whileHover={{ scale: 1.05 }}
+                  className="flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 bg-white/5 rounded-full border border-white/10"
+                >
+                  <item.icon className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary flex-shrink-0" />
+                  <span className="text-[10px] sm:text-xs text-white/80 whitespace-nowrap">{item.text}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+          
+          {/* Start button - always visible */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="flex justify-center mt-1 sm:mt-2"
+          >
+            <Button
+              onClick={onPlayClick}
+              size={isMobile ? 'default' : 'lg'}
+              className={`relative group bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white rounded-full shadow-2xl shadow-primary/30 overflow-hidden ${
+                isMobile ? 'px-5 py-3 text-sm' : isTablet ? 'px-6 py-4 text-base' : 'px-8 py-5 text-lg'
+              }`}
+            >
+              <span className="relative z-10 flex items-center gap-2">
+                <PlayCircle className={isMobile ? 'h-4 w-4' : 'h-5 w-5'} />
+                <span className="font-bold">Start Watching</span>
+              </span>
+              <motion.div
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                animate={{ x: ['-100%', '100%'] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+              />
+            </Button>
+          </motion.div>
+          
+          <motion.p 
+            className={`text-white/40 text-center ${isMobile ? 'text-[9px]' : 'text-[11px]'}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            Click to start your spiritual journey
+          </motion.p>
         </div>
       </motion.div>
     </motion.div>
@@ -359,6 +345,90 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
 const LiveBadge = ({ variant = 'default', isMobile = false }: { variant?: 'default' | 'transparent', isMobile?: boolean }) => {
   // Component is kept for potential future use but not displayed per requirements
   return null
+}
+
+// Branded Loading Overlay - Shows during YouTube iframe loading (event-based, not timer-based)
+const BrandedLoadingOverlay = ({ 
+  isVisible, 
+  programName 
+}: { 
+  isVisible: boolean
+  programName: string
+}) => {
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
+          className="absolute inset-0 z-[45] flex flex-col items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black"
+        >
+          {/* Background pattern */}
+          <div className="absolute inset-0 opacity-5">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1)_0%,transparent_50%)]" />
+          </div>
+          
+          {/* Logo and branding — fully responsive sizing */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.1, type: "spring", damping: 20 }}
+            className="relative flex flex-col items-center gap-2.5 sm:gap-3 md:gap-4"
+          >
+            {/* Spinning loader ring + logo — scales with viewport */}
+            <div className="relative flex items-center justify-center w-[14vmin] h-[14vmin] min-w-[3.5rem] min-h-[3.5rem] max-w-[7rem] max-h-[7rem] sm:min-w-[4.5rem] sm:min-h-[4.5rem] sm:max-w-[8rem] sm:max-h-[8rem] md:max-w-[9rem] md:max-h-[9rem]">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 rounded-full border-2 border-primary/20"
+              />
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                className="absolute inset-0 rounded-full border-t-2 border-primary"
+              />
+              {/* Logo image — 40% of the spinner circle */}
+              <img 
+                src="/DeeniTV-V-2.png" 
+                alt="Deeni.tv"
+                className="h-[40%] w-auto object-contain"
+              />
+            </div>
+            
+            {/* Program name banner */}
+            <div className="max-w-[85%] sm:max-w-md md:max-w-lg text-center px-3 sm:px-5 md:px-6">
+              <motion.div
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3"
+              >
+                <p className="text-white/50 uppercase tracking-wider font-medium text-[7px] sm:text-[9px] md:text-[10px] mb-0.5 sm:mb-1">
+                  Now Loading
+                </p>
+                <h3 className="text-white font-bold leading-tight line-clamp-2 text-xs sm:text-sm md:text-base lg:text-lg">
+                  {programName || 'Loading program...'}
+                </h3>
+              </motion.div>
+            </div>
+            
+            {/* Loading bar animation */}
+            <motion.div 
+              className="w-[25vmin] min-w-[6rem] max-w-[12rem] h-1 bg-white/10 rounded-full overflow-hidden"
+            >
+              <motion.div
+                animate={{ x: ['-100%', '100%'] }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                className="h-full w-full bg-gradient-to-r from-transparent via-primary to-transparent"
+              />
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
 }
 
 // Program Overlay Component - Auto-appearing Now Playing bar (ticker-style)
@@ -663,7 +733,8 @@ export function SyncedVideoPlayer({
   onHistoryModalClose,
   onOpenSchedule,
   openChannelSelectorModal = false,
-  onChannelSelectorModalClose
+  onChannelSelectorModalClose,
+  onProgramChange
 }: SyncedVideoPlayerProps) {
   // UI State
   const [showControls, setShowControls] = useState(true)
@@ -677,6 +748,10 @@ export function SyncedVideoPlayer({
   const [previousVideos, setPreviousVideos] = useState<VideoProgram[]>([])
   const [showProgramOverlay, setShowProgramOverlay] = useState(false)
   const [mainPlayerPaused, setMainPlayerPaused] = useState(false)
+  
+  // Branded loading overlay state - event-based, not timer-based
+  const [showBrandedOverlay, setShowBrandedOverlay] = useState(false)
+  const brandedOverlayProgramRef = useRef<string>('')
   
   // Channel State
   const [channels] = useState<Channel[]>(CHANNELS)
@@ -721,6 +796,9 @@ export function SyncedVideoPlayer({
   // onStateChange (ENDED) and the time-update check both call this so they always
   // advance the CURRENT queue, not the stale one captured at initializePlayer time.
   const playNextVideoRef = useRef<() => void>(() => {})
+  // syncImmediateAfterTransitionRef — holds the latest closure so playNextVideo
+  // (defined before syncImmediateAfterTransition) can call it without a TDZ error.
+  const syncImmediateAfterTransitionRef = useRef<(channelId: string) => Promise<void>>(async () => {})
   
   // YouTube player hook
   const { 
@@ -735,6 +813,19 @@ export function SyncedVideoPlayer({
     play,
     destroy
   } = useYouTubePlayer()
+
+  // ── Helper: build schedule array from current state and notify parent ──
+  // Deduplicates: ensures the currently-playing video never also appears in upcoming.
+  const notifyParentScheduleChange = useCallback((
+    nowPlaying: VideoProgram,
+    upcoming: VideoProgram[]
+  ) => {
+    if (!onProgramChange) return
+    // Remove the now-playing video from the upcoming list to avoid duplicates
+    const dedupedUpcoming = upcoming.filter(p => p.videoId !== nowPlaying.videoId)
+    const schedule: VideoProgram[] = [nowPlaying, ...dedupedUpcoming]
+    onProgramChange(nowPlaying.id, schedule)
+  }, [onProgramChange])
 
   // Load previous videos when channel changes
   useEffect(() => {
@@ -786,6 +877,10 @@ export function SyncedVideoPlayer({
     
     console.log('▶️ Playing next video:', nextProgram.title)
     
+    // Show branded overlay during loading transition
+    brandedOverlayProgramRef.current = nextProgram.title
+    setShowBrandedOverlay(true)
+    
     // Add current video to previous list
     if (currentProgram) {
       const updatedPrevious = addToPreviousVideos(currentChannelId, currentProgram)
@@ -809,6 +904,8 @@ export function SyncedVideoPlayer({
       // Still have API queue items
       setNextProgram(newNextProgram)
       setUpcomingVideos(newUpcomingQueue)
+      // Instantly notify parent so ScheduleModal / UI reflects the change
+      notifyParentScheduleChange(nextProgram, newUpcomingQueue)
     } else {
       // API queue exhausted — fall back to local schedule data
       const programs = getChannelPrograms(currentChannelId)
@@ -821,9 +918,12 @@ export function SyncedVideoPlayer({
           fallbackUpcoming.push(programs[(currentIndex + i) % programs.length])
         }
         setUpcomingVideos(fallbackUpcoming)
+        // Notify parent with fallback data
+        notifyParentScheduleChange(nextProgram, fallbackUpcoming)
       } else {
         setNextProgram(null)
         setUpcomingVideos([])
+        notifyParentScheduleChange(nextProgram, [])
       }
     }
     
@@ -860,12 +960,20 @@ export function SyncedVideoPlayer({
           setVideoDuration(duration)
         }
       }, 200)
+
+      // ── Immediate API sync to replenish queue with authoritative data ──
+      // Runs quickly after transition so the schedule / previous list updates fast.
+      // This refreshes upcoming list, previous videos, and notifies parent.
+      const channelForSync = currentChannelId
+      setTimeout(() => {
+        syncImmediateAfterTransitionRef.current(channelForSync)
+      }, 500)
     } else {
       console.error('❌ Failed to load next video')
       isTransitioningRef.current = false
     }
     
-  }, [currentProgram, nextProgram, currentChannelId, upcomingVideos, loadVideo, volume, isMuted, setYouTubeVolume, setYouTubeMuted, play, getDuration])
+  }, [currentProgram, nextProgram, currentChannelId, upcomingVideos, loadVideo, volume, isMuted, setYouTubeVolume, setYouTubeMuted, play, getDuration, notifyParentScheduleChange])
 
   // Keep playNextVideoRef always pointing at the freshest closure.
   // onStateChange (ENDED) and updateTimeDisplay both call this so they always
@@ -902,6 +1010,128 @@ export function SyncedVideoPlayer({
     }
   }, [currentProgram, getCurrentTime, getDuration, videoDuration, nextProgram])
 
+  // ── Browser-side external API call (bypasses Cloudflare) ──
+  const EXTERNAL_API_BASE = 'https://api.deeniinfotech.com/api/tv-schedules'
+
+  const fetchFromBrowserAPI = useCallback(async (channelId: string): Promise<any | null> => {
+    try {
+      const lid = CHANNEL_LID_MAP[channelId] || 5
+      let apiUrl = `${EXTERNAL_API_BASE}/live?lid=${lid}`
+      if (isQuranChannel(channelId)) {
+        apiUrl += '&IS=true'
+      }
+
+      console.log('📡 Browser → External API:', apiUrl)
+      const data = await clientFetchWithAuth(apiUrl)
+
+      // Normalise the response shape coming from the real API
+      const curr = data?.currentProgram || data?.current || data?.data?.currentProgram
+      if (!curr) return null
+
+      const serverTime = data?.serverTime || Date.now()
+
+      const currentProgram = {
+        ytVideoId: curr.ytVideoId || curr.videoId || curr.yt_video_id,
+        title: curr.title || curr.name,
+        startTime: curr.startTime || curr.start_time || serverTime,
+        endTime: curr.endTime || curr.end_time || (serverTime + (curr.duration || 3600) * 1000),
+        duration: curr.duration || 3600,
+        seekTo: curr.seekTo || curr.seek_to || 0,
+      }
+
+      const mapProg = (prog: any) => ({
+        ytVideoId: prog.ytVideoId || prog.videoId || prog.yt_video_id,
+        title: prog.title || prog.name,
+        startTime: prog.startTime || prog.start_time,
+        endTime: prog.endTime || prog.end_time,
+        duration: prog.duration,
+      })
+
+      const prevList = data?.previousPrograms || data?.previous || data?.data?.previousPrograms || []
+      const upList = data?.upcomingPrograms || data?.upcoming || data?.data?.upcomingPrograms || []
+
+      console.log('✅ External API OK — video:', currentProgram.ytVideoId)
+      return {
+        serverTime,
+        currentProgram,
+        previousPrograms: (Array.isArray(prevList) ? prevList : []).map(mapProg),
+        upcomingPrograms: (Array.isArray(upList) ? upList : []).map(mapProg),
+        _source: 'external-api',
+      }
+    } catch (err) {
+      console.warn('⚠️ Browser API call failed, will use local fallback:', err)
+      return null
+    }
+  }, [])
+
+  // ── Immediate API refresh after a video ends ──
+  // Runs once right after playNextVideo shifts the queue locally.
+  // Replenishes the upcoming queue from the server so the user always sees fresh data.
+  const syncImmediateAfterTransition = useCallback(async (channelId: string) => {
+    try {
+      console.log('🔄 Immediate API sync after video transition...')
+
+      let result = await fetchFromBrowserAPI(channelId)
+
+      if (!result) {
+        const response = await fetch(`/api/current-video?channel=${channelId}`, {
+          headers: { 'Cache-Control': 'no-cache' }
+        })
+        if (!response.ok) return
+        result = await response.json()
+      }
+
+      if (!result) return
+
+      // Update server time offset
+      if (result.serverTime) {
+        setServerTimeOffset(result.serverTime - Date.now())
+      }
+
+      // Refresh upcoming queue from API (authoritative)
+      if (result.upcomingPrograms && Array.isArray(result.upcomingPrograms)) {
+        const currentVideoId = currentProgramRef.current?.videoId
+        const upcoming: VideoProgram[] = result.upcomingPrograms
+          .map(
+            (prog: { ytVideoId: string; title: string; duration: number }) => ({
+              id: prog.ytVideoId,
+              videoId: prog.ytVideoId,
+              title: prog.title,
+              description: prog.title,
+              duration: prog.duration,
+              category: 'Lecture',
+              language: 'Bengali',
+              channelId,
+              thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
+            })
+          )
+          // Remove already-playing video from upcoming (API may still think it's upcoming)
+          .filter((p: VideoProgram) => p.videoId !== currentVideoId)
+
+        setUpcomingVideos(upcoming)
+        if (upcoming[0]) setNextProgram(upcoming[0])
+
+        // Notify parent with the latest data
+        if (currentProgramRef.current) {
+          notifyParentScheduleChange(currentProgramRef.current, upcoming)
+        }
+      }
+
+      // Refresh previous videos from localStorage (real user history)
+      const latestPrevious = getPreviousVideos(channelId)
+      if (latestPrevious.length > 0) {
+        setPreviousVideos(latestPrevious)
+      }
+
+      console.log('✅ Immediate post-transition sync complete')
+    } catch (error) {
+      console.error('⚠️ Immediate post-transition sync failed (non-critical):', error)
+    }
+  }, [fetchFromBrowserAPI, notifyParentScheduleChange])
+
+  // Keep the ref in sync with the latest closure
+  useEffect(() => { syncImmediateAfterTransitionRef.current = syncImmediateAfterTransition }, [syncImmediateAfterTransition])
+
   const loadChannel = useCallback(async (channelId: string) => {
     if (isLoading) return
     
@@ -920,20 +1150,28 @@ export function SyncedVideoPlayer({
       console.log('🎬 Loading channel:', channelId)
       
       const clientTime = Date.now()
-      const response = await fetch(`/api/current-video?channel=${channelId}`, {
-        headers: { 
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
+
+      // 1️⃣ Try external API directly from browser (bypasses Cloudflare)
+      let result = await fetchFromBrowserAPI(channelId)
+
+      // 2️⃣ Fallback to our own Next.js API route (local schedule data)
+      if (!result) {
+        console.log('📋 Falling back to local /api/current-video route...')
+        const response = await fetch(`/api/current-video?channel=${channelId}`, {
+          headers: { 
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        })
+        
+        if (!response.ok) {
+          throw new Error(`API error: ${response.status}`)
         }
-      })
-      
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
+        
+        result = await response.json()
       }
       
-      const result = await response.json()
-      
-      // New API format: { serverTime, currentProgram, previousPrograms, upcomingPrograms }
+      // Unified format: { serverTime, currentProgram, previousPrograms, upcomingPrograms }
       if (!result.serverTime || !result.currentProgram) {
         throw new Error('Invalid API response')
       }
@@ -988,19 +1226,24 @@ export function SyncedVideoPlayer({
         total: programs.length 
       })
       
-      // Set upcoming videos from API response
-      const upcoming: VideoProgram[] = (result.upcomingPrograms || []).map((prog: { ytVideoId: string; title: string; duration: number }) => ({
-        id: prog.ytVideoId,
-        videoId: prog.ytVideoId,
-        title: prog.title,
-        description: prog.title,
-        duration: prog.duration,
-        category: 'Lecture',
-        language: 'Bengali',
-        channelId: channelId,
-        thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
-      }))
+      // Set upcoming videos from API response — filter out the currently-playing video
+      const upcoming: VideoProgram[] = (result.upcomingPrograms || [])
+        .map((prog: { ytVideoId: string; title: string; duration: number }) => ({
+          id: prog.ytVideoId,
+          videoId: prog.ytVideoId,
+          title: prog.title,
+          description: prog.title,
+          duration: prog.duration,
+          category: 'Lecture',
+          language: 'Bengali',
+          channelId: channelId,
+          thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
+        }))
+        .filter((p: VideoProgram) => p.videoId !== program.videoId)
       setUpcomingVideos(upcoming)
+      
+      // Notify parent with fresh schedule data so ScheduleModal is up-to-date
+      notifyParentScheduleChange(program, upcoming)
       
       // Previous videos: localStorage (real user history) always takes priority.
       // API previousPrograms are only schedule-calculated — treat them as optional extras.
@@ -1026,6 +1269,8 @@ export function SyncedVideoPlayer({
       }
       
       lastVideoIdRef.current = program.videoId
+      
+      // No branded overlay on initial channel load — only on video transitions (playNextVideo)
       
       if (playerReady) {
         console.log('🔄 Loading new video in existing player')
@@ -1074,6 +1319,7 @@ export function SyncedVideoPlayer({
             } else if (state === YT_STATE.PLAYING) {
               console.log('▶️ Video is now playing')
               setShowStartScreen(false) // Ensure start screen is hidden
+              setShowBrandedOverlay(false) // Hide branded overlay when playback starts
             } else if (state === YT_STATE.PAUSED) {
               console.log('⏸️ Video paused - resuming')
               play()
@@ -1140,6 +1386,7 @@ export function SyncedVideoPlayer({
               playNextVideoRef.current()
             } else if (state === YT_STATE.PLAYING) {
               console.log('▶️ Video is now playing')
+              setShowBrandedOverlay(false) // Hide branded overlay when playback starts
             } else if (state === YT_STATE.PAUSED) {
               console.log('⏸️ Video paused - resuming')
               play()
@@ -1174,7 +1421,7 @@ export function SyncedVideoPlayer({
       setApiError(error instanceof Error ? error.message : 'Failed to load video')
       setIsLoading(false)
     }
-  }, [isLoading, playerReady, volume, initializePlayer, loadVideo, seekTo, play, setYouTubeVolume, setYouTubeMuted, onChannelChange, onStartClick, getDuration])
+  }, [isLoading, playerReady, volume, initializePlayer, loadVideo, seekTo, play, setYouTubeVolume, setYouTubeMuted, onChannelChange, onStartClick, getDuration, fetchFromBrowserAPI, notifyParentScheduleChange])
 
   const handleFirstTimeStart = useCallback(() => {
     if (!currentChannelId) {
@@ -1199,13 +1446,19 @@ export function SyncedVideoPlayer({
     try {
       console.log('🔄 Syncing with server (5-minute interval)...')
       
-      const response = await fetch(`/api/current-video?channel=${currentChannelId}`, {
-        headers: { 'Cache-Control': 'no-cache' }
-      })
+      // 1️⃣ Try external API directly from browser
+      let result = await fetchFromBrowserAPI(currentChannelId)
       
-      if (!response.ok) return
+      // 2️⃣ Fallback to local API route
+      if (!result) {
+        const response = await fetch(`/api/current-video?channel=${currentChannelId}`, {
+          headers: { 'Cache-Control': 'no-cache' }
+        })
+        if (!response.ok) return
+        result = await response.json()
+      }
       
-      const result = await response.json()
+      if (!result) return
       
       // Update server time offset
       if (result.serverTime) {
@@ -1230,49 +1483,58 @@ export function SyncedVideoPlayer({
         const hasDrifted    = !!(apiCurrentId && localCurrentId && apiCurrentId !== localCurrentId)
         const queueEmpty    = upcomingVideosRef.current.length === 0
 
+        // Helper: map + filter out the currently-playing video to prevent duplicates
+        const mapAndFilter = () => {
+          return result.upcomingPrograms
+            .map((prog: { ytVideoId: string; title: string; duration: number }) => ({
+              id: prog.ytVideoId,
+              videoId: prog.ytVideoId,
+              title: prog.title,
+              description: prog.title,
+              duration: prog.duration,
+              category: 'Lecture',
+              language: 'Bengali',
+              channelId: currentChannelId,
+              thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
+            }))
+            .filter((p: VideoProgram) => p.videoId !== localCurrentId)
+        }
+
         if (hasDrifted) {
           // Player has drifted from the broadcast schedule — hard-resync
           console.log('⚠️ Player drifted from server schedule. Resyncing queue...')
-          const upcoming: VideoProgram[] = result.upcomingPrograms.map((prog: { ytVideoId: string; title: string; duration: number }) => ({
-            id: prog.ytVideoId,
-            videoId: prog.ytVideoId,
-            title: prog.title,
-            description: prog.title,
-            duration: prog.duration,
-            category: 'Lecture',
-            language: 'Bengali',
-            channelId: currentChannelId,
-            thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
-          }))
+          const upcoming = mapAndFilter()
           setUpcomingVideos(upcoming)
           if (upcoming[0]) setNextProgram(upcoming[0])
+          // Notify parent about the drift correction
+          if (currentProgramRef.current) {
+            notifyParentScheduleChange(currentProgramRef.current, upcoming)
+          }
         } else if (queueEmpty) {
           // Local queue is exhausted — refill from API so playback can continue
           console.log('📋 Queue exhausted — refilling from server...')
-          const upcoming: VideoProgram[] = result.upcomingPrograms.map((prog: { ytVideoId: string; title: string; duration: number }) => ({
-            id: prog.ytVideoId,
-            videoId: prog.ytVideoId,
-            title: prog.title,
-            description: prog.title,
-            duration: prog.duration,
-            category: 'Lecture',
-            language: 'Bengali',
-            channelId: currentChannelId,
-            thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
-          }))
+          const upcoming = mapAndFilter()
           setUpcomingVideos(upcoming)
           if (upcoming[0]) setNextProgram(upcoming[0])
+          // Notify parent about the queue refill
+          if (currentProgramRef.current) {
+            notifyParentScheduleChange(currentProgramRef.current, upcoming)
+          }
         } else {
           // In sync and queue has items — leave it untouched
           // The queue shifts naturally one video at a time via playNextVideo()
           console.log('✅ In sync with server — queue intact, no changes')
+          // Still notify parent to keep schedule modal current
+          if (currentProgramRef.current) {
+            notifyParentScheduleChange(currentProgramRef.current, upcomingVideosRef.current)
+          }
         }
       }
       
     } catch (error) {
       console.error('Sync failed:', error)
     }
-  }, [playerReady, currentChannelId])
+  }, [playerReady, currentChannelId, fetchFromBrowserAPI, notifyParentScheduleChange])
 
   const handleReload = useCallback(() => {
     if (!currentChannelId) return
@@ -1303,6 +1565,8 @@ export function SyncedVideoPlayer({
     isTransitioningRef.current = true
     
     console.log('▶️ Playing from previous list:', video.title)
+    
+    // No branded overlay for previous-video clicks — only on auto-play transitions
     
     // Add current video to previous before switching
     if (currentProgram) {
@@ -1517,6 +1781,12 @@ export function SyncedVideoPlayer({
           {/* YouTube iframe container */}
           <div ref={youtubeContainerRef} className="absolute inset-0 w-full h-full" />
           <div className="absolute inset-0 w-full h-full pointer-events-auto" />
+          
+          {/* Branded Loading Overlay - Shows during YouTube loading, hides on PLAYING event */}
+          <BrandedLoadingOverlay
+            isVisible={showBrandedOverlay && !showStartScreen && !isLoading}
+            programName={brandedOverlayProgramRef.current || currentProgram?.title || ''}
+          />
           
           {/* Time/Date Display REMOVED - per requirements */}
           
@@ -1757,7 +2027,7 @@ export function SyncedVideoPlayer({
         {!showStartScreen && !isLoading && !apiError && playerReady && currentProgram && (
           <div className="w-full">
                 <div className={`bg-black/60 backdrop-blur-xl border border-white/10 border-t-0 rounded-b-2xl md:rounded-b-3xl ${
-                  isMobile ? 'px-3 py-2' : 'px-6 py-4'
+                  isMobile ? 'px-3 mt-1 pb-3' : 'px-6 pb-6'
                 }`}>
                   <div className="flex items-center justify-between gap-2 md:gap-4">
                     {/* Logo Section - Replaces sound bar */}

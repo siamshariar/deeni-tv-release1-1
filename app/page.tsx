@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { SyncedVideoPlayer } from '@/components/synced-video-player'
 import { MenuDrawer } from '@/components/menu-drawer'
 import { DonateButton } from '@/components/donate-button'
 import { ScheduleModal } from '@/components/schedule-modal'
 import { AboutModal } from '@/components/about-modal'
 import { ChannelSelector } from '@/components/channel-selector'
+import { VideoProgram } from '@/types/schedule'
 import { CHANNELS, getSavedChannel, saveChannel } from '@/lib/schedule-utils'
 
 export default function Home() {
@@ -40,7 +41,8 @@ export default function Home() {
     setIsLoading(false)
   }, [])
 
-  // Fetch current program and schedule from API when channel changes
+  // Fetch current program and schedule from API when channel changes (initial load only)
+  // The SyncedVideoPlayer handles 5-min syncing + instant updates via onProgramChange
   useEffect(() => {
     if (!activeChannelId) return
 
@@ -55,7 +57,7 @@ export default function Home() {
           setCurrentProgramId(currentId)
           
           // Build live schedule from API data
-          const schedule = []
+          const schedule: any[] = []
           
           // Add current program
           schedule.push({
@@ -94,11 +96,16 @@ export default function Home() {
     }
 
     fetchCurrentProgram()
-
-    // Poll for updates every 5 minutes (300000ms)
-    const interval = setInterval(fetchCurrentProgram, 300000)
-    return () => clearInterval(interval)
+    // No polling interval here — the SyncedVideoPlayer handles periodic + instant syncs
+    // and pushes updates via onProgramChange callback
   }, [activeChannelId])
+
+  // Called by SyncedVideoPlayer whenever the current program / schedule changes
+  // (video ended → next started, API sync, queue shift, etc.)
+  const handleProgramChange = useCallback((newProgramId: string, schedule: VideoProgram[]) => {
+    setCurrentProgramId(newProgramId)
+    setLiveSchedule(schedule as any[])
+  }, [])
 
   const handleSelectChannel = (channelId: string) => {
     setActiveChannelId(channelId)
@@ -187,6 +194,7 @@ export default function Home() {
         onOpenSchedule={() => setActiveModal('schedule')}
         openChannelSelectorModal={openChannelSelectorModal}
         onChannelSelectorModalClose={() => setOpenChannelSelectorModal(false)}
+        onProgramChange={handleProgramChange}
       />
       
       {/* Menu Drawer - Slides from bottom */}
