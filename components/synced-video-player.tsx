@@ -1303,6 +1303,12 @@ export function SyncedVideoPlayer({
             
             setYouTubeVolume(volume)
             setYouTubeMuted(false)
+            
+            // ── Add currently-playing video to Previous list immediately ──
+            // Ensures the first video shows in the modal right when it starts,
+            // not only after it ends. Persisted to localStorage for reload safety.
+            const immediatePrev = addToPreviousVideos(channelId, program)
+            setPreviousVideos(immediatePrev)
           },
           onStateChange: (state) => {
             if (!mountedRef.current) return
@@ -1371,6 +1377,12 @@ export function SyncedVideoPlayer({
             
             setYouTubeVolume(volume)
             setYouTubeMuted(false)
+            
+            // ── Add currently-playing video to Previous list immediately ──
+            // Ensures the first video shows in the modal right when it starts,
+            // not only after it ends. Persisted to localStorage for reload safety.
+            const immediatePrev = addToPreviousVideos(channelId, program)
+            setPreviousVideos(immediatePrev)
           },
           onStateChange: (state) => {
             if (!mountedRef.current) return
