@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server'
 import { getCurrentProgram, getUpcomingPrograms, getChannelPrograms, CHANNELS, MASTER_EPOCH_START, CHANNEL_LID_MAP, isQuranChannel } from '@/lib/schedule-utils'
+import { appendFileSync } from 'fs'
+
+function logSyncCall(channelId: string) {
+  try {
+    const ts = new Date().toISOString()
+    appendFileSync('/tmp/deeni-sync-calls.log', `[${ts}] /api/current-video called — channel=${channelId}\n`)
+  } catch {} // non-critical
+}
 
 /**
  * /api/current-video — local schedule fallback only.
@@ -21,6 +29,7 @@ export async function GET(request: Request) {
     
     // Local schedule data (used as fallback when browser external API call fails)
     console.log('📋 Serving local schedule data for channel:', channelId)
+    logSyncCall(channelId)
     const data = getCurrentProgram(channelId)
     const upcomingResult = getUpcomingPrograms(channelId, 10)
     const programs = getChannelPrograms(channelId)
