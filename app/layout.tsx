@@ -29,7 +29,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://deeni.tv'),
+  metadataBase: new URL('https://deeni-tv-release1-1.vercel.app'),
   title: {
     default: 'Deeni.tv - Your Spiritual TV Experience',
     template: '%s | Deeni.tv'
@@ -70,7 +70,7 @@ export const metadata: Metadata = {
     siteName: 'Deeni.tv',
     images: [
       {
-        url: '/Deeni-TV-Cover-1200-630.jpg',
+        url: 'https://deeni-tv-release1-1.vercel.app/Deeni-TV-Cover-1200-630.jpg',
         width: 1200,
         height: 630,
         alt: 'Deeni.tv - Your Spiritual TV Experience',
@@ -84,7 +84,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Deeni.tv - Your Spiritual TV Experience',
     description: 'Experience premium spiritual content in a cinematic lean-back TV interface',
-    images: ['/Deeni-TV-Cover-1200-630.jpg'],
+    images: ['/https://deeni-tv-release1-1.vercel.app/Deeni-TV-Cover-1200-630.jpg'],
     creator: '@deenitv',
   },
   
