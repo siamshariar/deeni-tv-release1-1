@@ -941,12 +941,6 @@ export function SyncedVideoPlayer({
       videoEndTimeoutRef.current = null
     }
     
-    // ── Add newly-starting video to Previously Watched immediately ──
-    // Mirrors the same call in loadChannel so the watched list updates live
-    // the moment the new video begins, without waiting for it to end.
-    const nowPrev = addToPreviousVideos(currentChannelId, nextProgram)
-    setPreviousVideos(nowPrev)
-
     // ── Update currentProgramRef inline so syncImmediateAfterTransition gets the
     // correct value immediately (don't wait for the useEffect after render). ──
     currentProgramRef.current = nextProgram
@@ -1335,12 +1329,6 @@ export function SyncedVideoPlayer({
             
             setYouTubeVolume(volume)
             setYouTubeMuted(false)
-            
-            // ── Add currently-playing video to Previous list immediately ──
-            // Ensures the first video shows in the modal right when it starts,
-            // not only after it ends. Persisted to localStorage for reload safety.
-            const immediatePrev = addToPreviousVideos(channelId, program)
-            setPreviousVideos(immediatePrev)
           },
           onStateChange: (state) => {
             if (!mountedRef.current) return
@@ -1409,12 +1397,6 @@ export function SyncedVideoPlayer({
             
             setYouTubeVolume(volume)
             setYouTubeMuted(false)
-            
-            // ── Add currently-playing video to Previous list immediately ──
-            // Ensures the first video shows in the modal right when it starts,
-            // not only after it ends. Persisted to localStorage for reload safety.
-            const immediatePrev = addToPreviousVideos(channelId, program)
-            setPreviousVideos(immediatePrev)
           },
           onStateChange: (state) => {
             if (!mountedRef.current) return
