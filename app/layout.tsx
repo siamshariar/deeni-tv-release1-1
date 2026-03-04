@@ -70,10 +70,10 @@ export const metadata: Metadata = {
     siteName: 'Deeni.tv',
     images: [
       {
-        url: '/favicon-512x512.png',
-        width: 512,
-        height: 512,
-        alt: 'Deeni.tv - Spiritual TV Experience',
+        url: '/Deeni-TV-Cover-1200-630.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Deeni.tv - Your Spiritual TV Experience',
       },
     ],
     locale: 'en_US',
@@ -84,7 +84,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Deeni.tv - Your Spiritual TV Experience',
     description: 'Experience premium spiritual content in a cinematic lean-back TV interface',
-    images: ['/favicon-512x512.png'],
+    images: ['/Deeni-TV-Cover-1200-630.jpg'],
     creator: '@deenitv',
   },
   

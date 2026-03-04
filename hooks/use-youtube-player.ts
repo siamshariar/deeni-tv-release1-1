@@ -65,7 +65,7 @@ export function useYouTubePlayer() {
     if (!containerRef.current) return
     
     volumeRef.current = options.volume || 75
-    isMutedRef.current = options.muted || true
+    isMutedRef.current = options.muted ?? true  // default muted; false is intentional
     videoIdRef.current = options.videoId
     
     try {
@@ -92,7 +92,7 @@ export function useYouTubePlayer() {
         videoId: options.videoId,
         playerVars: {
           autoplay: 1,
-          mute: options.muted ? 1 : 0,
+          mute: 1, // always start muted — required for iOS autoplay; onReady unmutes if needed
           controls: 0,
           disablekb: 1,
           fs: 0,
@@ -142,6 +142,18 @@ export function useYouTubePlayer() {
           }
         }
       })
+      // iOS Safari requires allow="autoplay" on the iframe element.
+      // The YT API doesn't set it automatically, so we patch it after creation.
+      setTimeout(() => {
+        try {
+          const iframe = containerRef.current?.querySelector('iframe')
+          if (iframe) {
+            iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen')
+            iframe.setAttribute('allowfullscreen', 'true')
+            iframe.setAttribute('webkit-playsinline', 'webkit-playsinline')
+          }
+        } catch (_) {}
+      }, 200)
     } catch (err) {
       options.onError?.(0, 'Failed to create player')
     }

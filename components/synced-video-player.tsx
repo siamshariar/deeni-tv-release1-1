@@ -50,6 +50,8 @@ interface SyncedVideoPlayerProps {
   onChannelSelectorModalClose?: () => void
   /** Called whenever the current program / schedule changes (video transition, API sync, etc.) */
   onProgramChange?: (currentProgramId: string, schedule: VideoProgram[]) => void
+  /** Increment this counter to trigger a channel reload (e.g. from the Reload menu option) */
+  triggerReload?: number
 }
 
 // Channel Selector Modal Component
@@ -209,12 +211,11 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-900 to-black z-50 overflow-hidden"
-    >
-      <motion.div
+    >      <motion.div
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         transition={{ type: "spring", damping: 20, stiffness: 200 }}
-        className="w-full h-full flex items-center justify-center p-4 sm:p-6 md:p-8"
+        className="relative w-full h-full flex items-center justify-center p-4 sm:p-6 md:p-8"
       >
         <div className="w-full max-w-xs sm:max-w-sm md:max-w-lg lg:max-w-2xl flex flex-col items-center gap-2 sm:gap-3 md:gap-4">
           {/* App Logo with Animation */}
@@ -363,7 +364,7 @@ const BrandedLoadingOverlay = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.3 }}
-          className="absolute inset-0 z-[55] flex flex-col items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black"
+          className="absolute inset-0 z-[45] flex flex-col items-center justify-center bg-gradient-to-br from-zinc-900 via-zinc-950 to-black"
         >
           {/* Background pattern */}
           <div className="absolute inset-0 opacity-5">
@@ -734,7 +735,8 @@ export function SyncedVideoPlayer({
   onOpenSchedule,
   openChannelSelectorModal = false,
   onChannelSelectorModalClose,
-  onProgramChange
+  onProgramChange,
+  triggerReload = 0
 }: SyncedVideoPlayerProps) {
   // UI State
   const [showControls, setShowControls] = useState(true)
@@ -1195,16 +1197,13 @@ export function SyncedVideoPlayer({
       const startTime = result.currentProgram.seekTo
       const timeRemaining = result.currentProgram.duration - result.currentProgram.seekTo
       
+      brandedOverlayProgramRef.current = program.title
+      setShowBrandedOverlay(true)
       setCurrentProgram(program)
       setCurrentTime(startTime)
       setDisplayTime(formatTime(startTime))
       setTimeRemaining(formatTime(timeRemaining))
       setVideoDuration(program.duration)
-      
-      // Show branded overlay with the now-known program title
-      // (covers both first-Start-click and mid-session channel-switch cases)
-      brandedOverlayProgramRef.current = program.title
-      setShowBrandedOverlay(true)
       
       // Get next program from upcomingPrograms
       if (result.upcomingPrograms && result.upcomingPrograms.length > 0) {
@@ -1444,10 +1443,6 @@ export function SyncedVideoPlayer({
     if (!currentChannelId) {
       setShowChannelSelector(true)
     } else {
-      // Immediately replace start screen with branded loading overlay
-      setShowStartScreen(false)
-      brandedOverlayProgramRef.current = ''
-      setShowBrandedOverlay(true)
       loadChannel(currentChannelId)
     }
   }, [currentChannelId, loadChannel])
@@ -1579,6 +1574,14 @@ export function SyncedVideoPlayer({
     }, 200)
   }, [destroy, currentChannelId, currentProgram, loadChannel])
 
+  // Trigger reload when parent increments the counter (e.g. Reload menu option)
+  useEffect(() => {
+    if (triggerReload > 0) {
+      handleReload()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [triggerReload])
+
   // Handle playing from previous videos
   const handlePlayFromPrevious = useCallback((video: VideoProgram) => {
     if (!currentChannelId || !playerReady || isTransitioningRef.current) return
@@ -1587,7 +1590,6 @@ export function SyncedVideoPlayer({
     
     console.log('▶️ Playing from previous list:', video.title)
     
-    // Show branded overlay for watched-video clicks
     brandedOverlayProgramRef.current = video.title
     setShowBrandedOverlay(true)
     
@@ -1805,9 +1807,9 @@ export function SyncedVideoPlayer({
           <div ref={youtubeContainerRef} className="absolute inset-0 w-full h-full" />
           <div className="absolute inset-0 w-full h-full pointer-events-auto" />
           
-          {/* Branded Loading Overlay - Shows on: Start click, next video, watched video, channel load */}
+          {/* Branded Loading Overlay - Shows during YouTube loading, hides on PLAYING event */}
           <BrandedLoadingOverlay
-            isVisible={showBrandedOverlay}
+            isVisible={showBrandedOverlay && !showStartScreen && !isLoading}
             programName={brandedOverlayProgramRef.current || currentProgram?.title || ''}
           />
           
@@ -1944,8 +1946,8 @@ export function SyncedVideoPlayer({
                 isMobile={isMobile}
               />
 
-              {/* BOTTOM TICKER - 360-degree infinite scroll, bold text */}
-              {showTicker && (
+              {/* BOTTOM TICKER - Commented out per requirements */}
+              {false && showTicker && (
                 <motion.div
                   initial={{ y: 100 }}
                   animate={{ y: 0 }}
@@ -1956,24 +1958,21 @@ export function SyncedVideoPlayer({
                     isMobile ? 'h-10' : 'h-20'
                   }`}>
                     <div className="relative h-full flex items-center px-2 md:px-4">
-                      {/* Left Section - Deeni.tv Logo */}
                       <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
                       </div>
 
-                      {/* Desktop Ticker - 360-degree infinite scroll */}
                       {!isMobile && (
                         <>
                           <div className="flex-1 min-w-0 overflow-hidden mx-4">
                             <DesktopTicker 
-                              key={currentProgram.id}
+                              key={currentProgram?.id}
                               videos={upcomingVideos} 
                               currentIndex={cycleInfo.current - 1}
                               totalPrograms={cycleInfo.total}
-                              currentProgramId={currentProgram.id}
+                              currentProgramId={currentProgram?.id ?? ''}
                             />
                           </div>
                           
-                          {/* Time Section - Bold text */}
                           <div className="flex items-center gap-3 flex-shrink-0">
                             <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
                               <Clock className="h-3.5 w-3.5 text-primary" />
@@ -1990,36 +1989,22 @@ export function SyncedVideoPlayer({
                                 </span>
                               </div>
                             )}
-                            
-                            {/* Previous Videos Button - Desktop */}
-                            {/* <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setShowPreviousModal(true)}
-                              className="text-white/90 hover:bg-white/20 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 h-9 w-9"
-                              title="Previously Watched"
-                            >
-                              <History className="h-4 w-4" />
-                            </Button> */}
                           </div>
                         </>
                       )}
                       
-                      {/* Mobile Ticker - Ultra compact with more items */}
                       {isMobile && (
                         <>
-                          {/* Ticker takes most of the width */}
                           <div className="flex-1 min-w-0 overflow-hidden ml-1">
                             <MobileTicker 
-                              key={currentProgram.id}
+                              key={currentProgram?.id}
                               videos={upcomingVideos} 
                               currentIndex={cycleInfo.current - 1}
                               totalPrograms={cycleInfo.total}
-                              currentProgramId={currentProgram.id}
+                              currentProgramId={currentProgram?.id ?? ''}
                             />
                           </div>
                           
-                          {/* Compact time display - Combined current and next */}
                           <div className="flex items-center gap-0 ml-1 flex-shrink-0">
                             <div className="flex items-center gap-0.5 px-1 py-0.5 bg-black/70 backdrop-blur-sm rounded-l border border-white/20">
                               <Clock className="h-2 w-2 text-primary" />
@@ -2031,7 +2016,7 @@ export function SyncedVideoPlayer({
                               <div className="flex items-center gap-0.5 px-1 py-0.5 bg-yellow-500/20 backdrop-blur-sm rounded-r border border-yellow-500/30 border-l-0">
                                 <ArrowRight className="h-2 w-2 text-yellow-300" />
                                 <span className="text-yellow-300 font-black text-[7px] whitespace-nowrap">
-                                  {formatTime(nextProgram.duration)}
+                                  {formatTime(nextProgram?.duration ?? 0)}
                                 </span>
                               </div>
                             )}
@@ -2050,7 +2035,7 @@ export function SyncedVideoPlayer({
         {!showStartScreen && !isLoading && !apiError && playerReady && currentProgram && (
           <div className="w-full">
                 <div className={`bg-black/60 backdrop-blur-xl border border-white/10 border-t-0 rounded-b-2xl md:rounded-b-3xl ${
-                  isMobile ? 'px-3 mt-1 pb-3' : 'px-6 pb-6'
+                  isMobile ? 'px-3 py-2' : 'px-6 py-4'
                 }`}>
                   <div className="flex items-center justify-between gap-2 md:gap-4">
                     {/* Logo Section - Replaces sound bar */}
@@ -2062,15 +2047,13 @@ export function SyncedVideoPlayer({
                       />
                     </div>
 
-                    {/* Action Buttons */}
+                    {/* Action Buttons - Order: Schedule, History, Language, Refresh, Menu */}
                     <div className="flex items-center gap-1 md:gap-2">
                       {[
-                        { icon: Globe, onClick: () => handleOpenChannelSelector(), title: 'Change Channel' },
-                        { icon: Calendar, onClick: () => onOpenSchedule?.(), title: 'Schedule' },
-                        /* Eye icon removed per requirements */
-                        /* { icon: showTicker ? EyeOff : Eye, onClick: () => setShowTicker(!showTicker), title: showTicker ? 'Hide Ticker' : 'Show Ticker' }, */
-                        { icon: RefreshCw, onClick: handleReload, title: 'Reload' },
-                        { icon: History, onClick: () => setShowPreviousModal(true), title: 'Previously Watched' },
+                        { icon: Calendar, onClick: () => onOpenSchedule?.(), title: "Today's Schedule" },
+                        { icon: History, onClick: () => setShowPreviousModal(true), title: 'Watched Program' },
+                        { icon: Globe, onClick: () => handleOpenChannelSelector(), title: 'Language' },
+                        { icon: RefreshCw, onClick: handleReload, title: 'Refresh' },
                         { icon: MoreHorizontal, onClick: onMenuOpen, title: 'Menu' },
                       ].map((item, index) => (
                         <motion.div
