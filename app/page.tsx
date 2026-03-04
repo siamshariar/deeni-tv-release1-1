@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { SyncedVideoPlayer } from '@/components/synced-video-player'
-import { MenuDrawer } from '@/components/menu-drawer'
+import { MenuDrawer, MenuOption } from '@/components/menu-drawer'
 import { DonateButton } from '@/components/donate-button'
 import { ScheduleModal } from '@/components/schedule-modal'
 import { AboutModal } from '@/components/about-modal'
@@ -23,6 +23,7 @@ export default function Home() {
   const [showStartModal, setShowStartModal] = useState(false)
   const [openHistoryModal, setOpenHistoryModal] = useState(false)
   const [openChannelSelectorModal, setOpenChannelSelectorModal] = useState(false)
+  const [reloadCounter, setReloadCounter] = useState(0)
 
   // Check localStorage for saved channel on initial load
   useEffect(() => {
@@ -125,7 +126,7 @@ export default function Home() {
     // The video player will handle the actual playback
   }
 
-  const handleMenuOptionSelect = (option: 'language' | 'schedule' | 'about' | 'history') => {
+  const handleMenuOptionSelect = (option: MenuOption) => {
     setIsMenuOpen(false)
     
     if (option === 'language') {
@@ -133,13 +134,16 @@ export default function Home() {
         setOpenChannelSelectorModal(true)
       }, 300)
     } else if (option === 'history') {
-      // Open history modal in the player
       setTimeout(() => {
         setOpenHistoryModal(true)
       }, 300)
+    } else if (option === 'reload') {
+      setReloadCounter(c => c + 1)
+    } else if (option === 'donate') {
+      window.open('https://www.deeniinfotech.com/donate#donation-form', '_blank', 'noopener,noreferrer')
     } else {
       setTimeout(() => {
-        setActiveModal(option)
+        setActiveModal(option as 'schedule' | 'about')
       }, 300)
     }
   }
@@ -195,6 +199,7 @@ export default function Home() {
         openChannelSelectorModal={openChannelSelectorModal}
         onChannelSelectorModalClose={() => setOpenChannelSelectorModal(false)}
         onProgramChange={handleProgramChange}
+        triggerReload={reloadCounter}
       />
       
       {/* Menu Drawer - Slides from bottom */}

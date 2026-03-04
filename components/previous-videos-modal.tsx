@@ -283,7 +283,7 @@ const VideoPlayerModal = ({
                       className={isMobile ? 'h-4' : 'h-6'}
                     />
                   </div>
-                  {/* <div className="flex items-center gap-1 md:gap-2"> */}
+                  <div className="flex items-center gap-1 md:gap-2">
                     {/* Volume toggle */}
                     {/* <Button
                       variant="ghost"
@@ -308,7 +308,7 @@ const VideoPlayerModal = ({
                     >
                       <X className={isMobile ? 'h-3.5 w-3.5' : 'h-4 w-4'} />
                     </Button> */}
-                  {/* </div> */}
+                  </div>
                 </div>
               </div>
             </div>
@@ -378,10 +378,7 @@ export function PreviousVideosModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2 }}
-              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[80vh] bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 rounded-2xl shadow-2xl border border-white/10 z-[70] overflow-hidden"
-              style={{
-                width: isMobile ? 'calc(100% - 2rem)' : 'calc(100% - 4rem)',
-              }}
+              className={`fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-h-[80vh] bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 rounded-2xl shadow-2xl border border-white/10 z-[70] overflow-hidden ${isMobile ? 'max-w-sm' : 'max-w-2xl'}`}
             >
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-white/10">
@@ -431,25 +428,19 @@ export function PreviousVideosModal({
                         onClick={() => handlePlayVideo(video)}
                         className="w-full p-4 rounded-xl border bg-white/5 border-white/10 hover:bg-white/10 hover:border-primary/30 transition-all group text-left"
                       >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex-1 min-w-0 flex items-center gap-3">
-                            {/* Play icon - Smaller */}
-                            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors">
-                              <Play className="h-2.5 w-2.5 text-primary fill-primary" />
-                            </div>
-                            
-                            {/* Title only - no type/language info */}
-                            <h3 className="text-white font-semibold text-sm truncate group-hover:text-primary transition-colors">
-                              {video.title}
-                            </h3>
+                        <div className="flex items-start gap-3">
+                          <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center group-hover:bg-primary/30 transition-colors mt-0.5">
+                            <Play className="h-2.5 w-2.5 text-primary fill-primary" />
                           </div>
                           
-                          {/* Duration badge - 1h 40m format */}
-                          <div className="flex-shrink-0">
-                            <span className="px-3 py-1 text-xs font-medium bg-white/10 text-white/80 rounded-full flex items-center gap-1">
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-white font-semibold text-sm leading-snug group-hover:text-primary transition-colors">
+                              {video.title}
+                            </h3>
+                            <p className="text-white/40 text-xs mt-1.5 flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               {formatDuration(video.duration)}
-                            </span>
+                            </p>
                           </div>
                         </div>
                       </motion.button>
