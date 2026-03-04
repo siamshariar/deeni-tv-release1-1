@@ -60,6 +60,14 @@ export function useYouTubePlayer() {
       }
     })
   }, [])
+
+  // ── Pre-load the YouTube iframe API as soon as the hook mounts ──
+  // This ensures window.YT is ready before the user taps any button,
+  // keeping player creation (new YT.Player) inside the user-gesture window
+  // on iOS Safari, which blocks autoplay if triggered outside a gesture.
+  useEffect(() => {
+    loadYouTubeAPI().catch(() => {}) // fire-and-forget; errors handled per-init
+  }, [loadYouTubeAPI])
   
   const initializePlayer = useCallback(async (options: YouTubePlayerOptions) => {
     if (!containerRef.current) return
@@ -142,18 +150,35 @@ export function useYouTubePlayer() {
           }
         }
       })
-      // iOS Safari requires allow="autoplay" on the iframe element.
-      // The YT API doesn't set it automatically, so we patch it after creation.
-      setTimeout(() => {
+      // ── iOS Safari iframe attribute patch ──
+      // The YT iFrame API creates the iframe asynchronously; iOS requires several
+      // attributes to be present on the <iframe> element itself for autoplay and
+      // inline playback to work.  We patch them as soon as the iframe appears.
+      // Run immediately AND retry up to 3 times to cover slow iframe creation.
+      const patchIframeForIOS = (attempt = 0) => {
         try {
           const iframe = containerRef.current?.querySelector('iframe')
           if (iframe) {
-            iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen')
-            iframe.setAttribute('allowfullscreen', 'true')
+            // Inline playback — mandatory for iOS (prevents fullscreen takeover)
+            iframe.setAttribute('playsinline', 'true')
             iframe.setAttribute('webkit-playsinline', 'webkit-playsinline')
+            iframe.setAttribute('x-webkit-airplay', 'allow')
+            // Allow list — must include autoplay for iOS WKWebView / Safari
+            iframe.setAttribute(
+              'allow',
+              'autoplay; encrypted-media; picture-in-picture; fullscreen; accelerometer; gyroscope; clipboard-write; web-share'
+            )
+            iframe.setAttribute('allowfullscreen', 'true')
+            iframe.setAttribute('allowtransparency', 'true')
+            iframe.style.border = 'none'
+            iframe.style.pointerEvents = 'none' // keep custom controls active
+          } else if (attempt < 3) {
+            // iframe not yet injected by YT API — retry
+            setTimeout(() => patchIframeForIOS(attempt + 1), 300)
           }
         } catch (_) {}
-      }, 200)
+      }
+      setTimeout(() => patchIframeForIOS(), 100)
     } catch (err) {
       options.onError?.(0, 'Failed to create player')
     }

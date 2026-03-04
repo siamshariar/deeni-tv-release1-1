@@ -941,6 +941,16 @@ export function SyncedVideoPlayer({
       videoEndTimeoutRef.current = null
     }
     
+    // ── Add newly-starting video to Previously Watched immediately ──
+    // Mirrors the same call in loadChannel so the watched list updates live
+    // the moment the new video begins, without waiting for it to end.
+    const nowPrev = addToPreviousVideos(currentChannelId, nextProgram)
+    setPreviousVideos(nowPrev)
+
+    // ── Update currentProgramRef inline so syncImmediateAfterTransition gets the
+    // correct value immediately (don't wait for the useEffect after render). ──
+    currentProgramRef.current = nextProgram
+
     // Load and play the next video
     lastVideoIdRef.current = nextProgram.videoId
     const loaded = loadVideo(nextProgram.videoId, startTime)
@@ -1068,7 +1078,7 @@ export function SyncedVideoPlayer({
 
   // ── Immediate API refresh after a video ends ──
   // Runs once right after playNextVideo shifts the queue locally.
-  // Replenishes the upcoming queue from the server so the user always sees fresh data.
+  // Replenishes all three sections from the server so the user always sees fresh data.
   const syncImmediateAfterTransition = useCallback(async (channelId: string) => {
     try {
       console.log('🔄 Immediate API sync after video transition...')
@@ -1090,42 +1100,60 @@ export function SyncedVideoPlayer({
         setServerTimeOffset(result.serverTime - Date.now())
       }
 
-      // Refresh upcoming queue from API (authoritative)
-      if (result.upcomingPrograms && Array.isArray(result.upcomingPrograms)) {
-        const currentVideoId = currentProgramRef.current?.videoId
-        const upcoming: VideoProgram[] = result.upcomingPrograms
-          .map(
-            (prog: { ytVideoId: string; title: string; duration: number }) => ({
-              id: prog.ytVideoId,
-              videoId: prog.ytVideoId,
-              title: prog.title,
-              description: prog.title,
-              duration: prog.duration,
-              category: 'Lecture',
-              language: 'Bengali',
-              channelId,
-              thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
-            })
-          )
-          // Remove already-playing video from upcoming (API may still think it's upcoming)
-          .filter((p: VideoProgram) => p.videoId !== currentVideoId)
-
-        setUpcomingVideos(upcoming)
-        if (upcoming[0]) setNextProgram(upcoming[0])
-
-        // Notify parent with the latest data
-        if (currentProgramRef.current) {
-          notifyParentScheduleChange(currentProgramRef.current, upcoming)
-        }
-      }
-
-      // Refresh previous videos from localStorage (real user history)
+      // ── Section 1: Previous videos — always re-read from localStorage ──
+      // localStorage was already written synchronously in playNextVideo.
+      // Re-reading here ensures the modal reflects the absolute latest list.
       const latestPrevious = getPreviousVideos(channelId)
       if (latestPrevious.length > 0) {
         setPreviousVideos(latestPrevious)
       }
 
-      console.log('✅ Immediate post-transition sync complete')
+      // ── Section 2 & 3: Upcoming queue + schedule notification ──
+      // The API may LAG: it might still report the OLD video as "currentProgram"
+      // and include the NEW current video in "upcomingPrograms".
+      // Strategy: always trust our local currentProgramRef as ground truth for
+      // what is NOW playing, and strip any matching ID from upcoming.
+      if (result.upcomingPrograms && Array.isArray(result.upcomingPrograms)) {
+        const localCurrentId = currentProgramRef.current?.videoId
+        const apiCurrentId   = result.currentProgram?.ytVideoId
+
+        // Build the mapped upcoming list
+        const mapped: VideoProgram[] = result.upcomingPrograms.map(
+          (prog: { ytVideoId: string; title: string; duration: number }) => ({
+            id: prog.ytVideoId,
+            videoId: prog.ytVideoId,
+            title: prog.title,
+            description: prog.title,
+            duration: prog.duration,
+            category: 'Lecture',
+            language: 'Bengali',
+            channelId,
+            thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
+          })
+        )
+
+        // Strip BOTH the local current video AND (if API is lagging) also the
+        // API-reported current video so neither appears in the upcoming queue.
+        const upcoming = mapped.filter(
+          (p: VideoProgram) => p.videoId !== localCurrentId && p.videoId !== apiCurrentId
+        )
+
+        // If the API has caught up (apiCurrentId === localCurrentId), include
+        // everything that comes after — the filter above already handles that.
+        // If the API is still lagging (apiCurrentId !== localCurrentId), the API's
+        // currentProgram is the old video; it won't appear in upcoming anyway.
+        // Either way, the result is correct.
+
+        setUpcomingVideos(upcoming)
+        if (upcoming[0]) setNextProgram(upcoming[0])
+
+        // Notify parent (schedule modal + current-program indicator) with fresh data
+        if (currentProgramRef.current) {
+          notifyParentScheduleChange(currentProgramRef.current, upcoming)
+        }
+      }
+
+      console.log('✅ Immediate post-transition sync complete — all sections updated')
     } catch (error) {
       console.error('⚠️ Immediate post-transition sync failed (non-critical):', error)
     }
@@ -1443,6 +1471,11 @@ export function SyncedVideoPlayer({
     if (!currentChannelId) {
       setShowChannelSelector(true)
     } else {
+      // Immediately hide the start screen and show the loading overlay so the
+      // user gets instant visual feedback on tap — especially important on iOS
+      // where a user-gesture must trigger visible UI change synchronously.
+      setShowStartScreen(false)
+      setIsLoading(true)
       loadChannel(currentChannelId)
     }
   }, [currentChannelId, loadChannel])
@@ -1461,6 +1494,13 @@ export function SyncedVideoPlayer({
     
     try {
       console.log('🔄 Syncing with server (5-minute interval)...')
+
+      // ── Ping our own server so we have a server-side timestamp for verifying the interval ──
+      fetch('/api/sync-ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ channelId: currentChannelId, source: 'browser-sync' })
+      }).catch(() => {}) // fire-and-forget, don't block main sync
       
       // 1️⃣ Try external API directly from browser
       let result = await fetchFromBrowserAPI(currentChannelId)
@@ -1517,15 +1557,63 @@ export function SyncedVideoPlayer({
         }
 
         if (hasDrifted) {
-          // Player has drifted from the broadcast schedule — hard-resync
-          console.log('⚠️ Player drifted from server schedule. Resyncing queue...')
-          const upcoming = mapAndFilter()
+          // Player has drifted from the broadcast schedule — hard-resync the current video
+          console.log('⚠️ Player drifted from server schedule. Loading new current video and resyncing all sections...')
+
+          // 1. Save the currently-playing video to previous history before replacing it
+          if (currentProgramRef.current) {
+            const updatedPrevious = addToPreviousVideos(currentChannelId, currentProgramRef.current)
+            setPreviousVideos(updatedPrevious)
+          }
+
+          // 2. Build new current program object from API data
+          const newCurrentProgram: VideoProgram = {
+            id: apiCurrentId!,
+            videoId: apiCurrentId!,
+            title: result.currentProgram.title,
+            description: result.currentProgram.title,
+            duration: result.currentProgram.duration,
+            category: 'Lecture',
+            language: 'Bengali',
+            channelId: currentChannelId,
+            thumbnail: `https://img.youtube.com/vi/${apiCurrentId}/maxresdefault.jpg`
+          }
+          const seekOffset = result.currentProgram.seekTo || 0
+          const remaining = result.currentProgram.duration - seekOffset
+
+          // 3. Update all player state to reflect the new current program
+          setCurrentProgram(newCurrentProgram)
+          setCurrentTime(seekOffset)
+          setDisplayTime(formatTime(seekOffset))
+          setTimeRemaining(formatTime(remaining))
+          setVideoDuration(newCurrentProgram.duration)
+          lastVideoIdRef.current = apiCurrentId!
+
+          // 4. Replace the iframe content immediately with the new video
+          const loaded = loadVideo(apiCurrentId!, seekOffset)
+          if (loaded) {
+            setTimeout(() => { play() }, 200)
+          }
+
+          // 5. Update upcoming queue — filter out the NEW current video to prevent duplicates
+          const upcoming = result.upcomingPrograms
+            .map((prog: { ytVideoId: string; title: string; duration: number }) => ({
+              id: prog.ytVideoId,
+              videoId: prog.ytVideoId,
+              title: prog.title,
+              description: prog.title,
+              duration: prog.duration,
+              category: 'Lecture',
+              language: 'Bengali',
+              channelId: currentChannelId,
+              thumbnail: `https://img.youtube.com/vi/${prog.ytVideoId}/maxresdefault.jpg`
+            }))
+            .filter((p: VideoProgram) => p.videoId !== apiCurrentId)
           setUpcomingVideos(upcoming)
           if (upcoming[0]) setNextProgram(upcoming[0])
-          // Notify parent about the drift correction
-          if (currentProgramRef.current) {
-            notifyParentScheduleChange(currentProgramRef.current, upcoming)
-          }
+
+          // 6. Notify parent so schedule modal and current program indicator reflect new state
+          notifyParentScheduleChange(newCurrentProgram, upcoming)
         } else if (queueEmpty) {
           // Local queue is exhausted — refill from API so playback can continue
           console.log('📋 Queue exhausted — refilling from server...')
@@ -1537,12 +1625,22 @@ export function SyncedVideoPlayer({
             notifyParentScheduleChange(currentProgramRef.current, upcoming)
           }
         } else {
-          // In sync and queue has items — leave it untouched
-          // The queue shifts naturally one video at a time via playNextVideo()
-          console.log('✅ In sync with server — queue intact, no changes')
-          // Still notify parent to keep schedule modal current
+          // In sync: local current video matches API — refresh upcoming + notify on every tick.
+          // We always refresh from the API so the schedule modal shows authoritative data.
+          console.log('✅ In sync with server — refreshing upcoming queue and notifying parent')
+          const upcoming = mapAndFilter()
+          if (upcoming.length > 0) {
+            // Only replace the queue if the API returned a non-empty list.
+            // This prevents accidentally wiping a valid queue on a transient empty response.
+            setUpcomingVideos(upcoming)
+            if (upcoming[0]) setNextProgram(upcoming[0])
+          }
+          // Always notify parent so schedule modal is up-to-date
           if (currentProgramRef.current) {
-            notifyParentScheduleChange(currentProgramRef.current, upcomingVideosRef.current)
+            notifyParentScheduleChange(
+              currentProgramRef.current,
+              upcoming.length > 0 ? upcoming : upcomingVideosRef.current
+            )
           }
         }
       }
@@ -1550,7 +1648,7 @@ export function SyncedVideoPlayer({
     } catch (error) {
       console.error('Sync failed:', error)
     }
-  }, [playerReady, currentChannelId, fetchFromBrowserAPI, notifyParentScheduleChange])
+  }, [playerReady, currentChannelId, fetchFromBrowserAPI, notifyParentScheduleChange, loadVideo, play])
 
   const handleReload = useCallback(() => {
     if (!currentChannelId) return
