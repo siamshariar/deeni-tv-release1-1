@@ -66,7 +66,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Deeni.tv - Your Spiritual TV Experience',
     description: 'Experience premium spiritual content in a cinematic lean-back TV interface',
-    url: 'https://deeni.tv',
+    url: 'https://deeni-tv-release1-1.vercel.app/',
     siteName: 'Deeni.tv',
     images: [
       {
