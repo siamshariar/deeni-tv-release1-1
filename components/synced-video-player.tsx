@@ -2341,7 +2341,7 @@ export function SyncedVideoPlayer({
           setIsMuted(false)
           setMainPlayerPaused(false)
           // Do NOT close the previously watched modal - it stays open
-          // Do NOT reload or restart the live TV
+          // Do NOT reload or restart the TV
         }}
       />
     </div>
