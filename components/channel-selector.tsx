@@ -4,13 +4,13 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Globe, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Channel } from '@/types/schedule'
+import { ApiChannel } from '@/lib/schedule-utils'
 import { useMediaQuery } from '@/hooks/use-media-query'
 
 interface ChannelSelectorProps {
   isOpen: boolean
   onClose: () => void
-  channels: Channel[]
+  channels: ApiChannel[]
   onSelectChannel: (channelId: string) => void
   currentChannelId?: string
   isFirstTime?: boolean
@@ -27,10 +27,8 @@ export function ChannelSelector({
   const isMobile = useMediaQuery('(max-width: 640px)')
   const [searchTerm, setSearchTerm] = useState('')
 
-  const filtered = channels.filter(
-    (ch) =>
-      ch.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ch.language.toLowerCase().includes(searchTerm.toLowerCase())
+  const filtered = channels.filter((ch) =>
+    ch.title.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   const handleSelect = (channelId: string) => {
@@ -118,14 +116,14 @@ export function ChannelSelector({
                     transition={{ delay: index * 0.05 }}
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => handleSelect(channel.id)}
+                    onClick={() => handleSelect(String(channel.id))}
                     className={`relative group p-4 rounded-xl border transition-all text-left ${
-                      channel.id === currentChannelId
+                      String(channel.id) === currentChannelId
                         ? 'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border-primary/50 shadow-lg shadow-primary/20'
                         : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                     }`}
                   >
-                    {channel.id === currentChannelId && (
+                    {String(channel.id) === currentChannelId && (
                       <motion.div
                         className="absolute inset-0 rounded-xl bg-primary/20"
                         animate={{ scale: [1, 1.05, 1], opacity: [0.3, 0.5, 0.3] }}
@@ -133,18 +131,17 @@ export function ChannelSelector({
                       />
                     )}
                     <div className="relative flex items-center gap-3">
-                      <div className="text-lg filter drop-shadow-lg">📺</div>
+                      <div className="text-lg filter drop-shadow-lg">
+                        {channel.isQuran ? '📖' : '📺'}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <p className={`font-semibold truncate ${
-                          channel.id === currentChannelId ? 'text-primary' : 'text-white'
+                          String(channel.id) === currentChannelId ? 'text-primary' : 'text-white'
                         }`}>
-                          {channel.name}
-                        </p>
-                        <p className="text-xs text-white/40 truncate">
-                          dini.tv/{channel.name.toLowerCase()}
+                          {channel.title}
                         </p>
                       </div>
-                      {channel.id === currentChannelId && (
+                      {String(channel.id) === currentChannelId && (
                         <div className="px-2 py-1 bg-primary/20 rounded-full flex-shrink-0">
                           <span className="text-primary text-xs font-medium">Current</span>
                         </div>
