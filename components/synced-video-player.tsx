@@ -29,10 +29,11 @@ import {
   saveChannel,
   addToPreviousVideos,
   getPreviousVideos,
-  CHANNEL_LID_MAP,
-  isQuranChannel,
   savePreviousVideos,
-  STORAGE_KEY
+  STORAGE_KEY,
+  ApiChannel,
+  getStoredApiChannels,
+  saveApiChannels,
 } from '@/lib/schedule-utils'
 import { useYouTubePlayer, YT_STATE } from '@/hooks/use-youtube-player'
 import { PreviousVideosModal } from './previous-videos-modal'
@@ -64,7 +65,7 @@ const ChannelSelectorModal = ({
 }: { 
   isOpen: boolean
   onClose: () => void
-  channels: Channel[]
+  channels: ApiChannel[]
   onSelectChannel: (channelId: string) => void
   currentChannelId?: string
 }) => {
@@ -72,8 +73,7 @@ const ChannelSelectorModal = ({
   const [searchTerm, setSearchTerm] = useState('')
   
   const filteredChannels = channels.filter(channel => 
-    channel.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    channel.language.toLowerCase().includes(searchTerm.toLowerCase())
+    channel.title.toLowerCase().includes(searchTerm.toLowerCase())
   )
   
   return (
@@ -141,16 +141,16 @@ const ChannelSelectorModal = ({
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => {
-                      onSelectChannel(channel.id)
+                      onSelectChannel(String(channel.id))
                       onClose()
                     }}
                     className={`relative group p-4 rounded-xl border transition-all ${
-                      channel.id === currentChannelId
+                      String(channel.id) === currentChannelId
                         ? 'bg-gradient-to-br from-primary/20 via-primary/10 to-transparent border-primary/50 shadow-lg shadow-primary/20'
                         : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
                     }`}
                   >
-                    {channel.id === currentChannelId && (
+                    {String(channel.id) === currentChannelId && (
                       <motion.div
                         className="absolute inset-0 rounded-xl bg-primary/20"
                         animate={{
@@ -166,18 +166,17 @@ const ChannelSelectorModal = ({
                     )}
                     
                     <div className="relative flex items-center gap-3">
-                      <div className="text-lg filter drop-shadow-lg">📺</div>
+                      <div className="text-lg filter drop-shadow-lg">
+                        {channel.isQuran ? '📖' : '📺'}
+                      </div>
                       <div className="flex-1 text-left">
                         <p className={`font-semibold ${
-                          channel.id === currentChannelId ? 'text-primary' : 'text-white'
+                          String(channel.id) === currentChannelId ? 'text-primary' : 'text-white'
                         }`}>
-                          {channel.name}
-                        </p>
-                        <p className="text-xs text-white/40">
-                          dini.tv/{channel.name.toLowerCase()}
+                          {channel.title}
                         </p>
                       </div>
-                      {channel.id === currentChannelId && (
+                      {String(channel.id) === currentChannelId && (
                         <div className="px-2 py-1 bg-primary/20 rounded-full">
                           <span className="text-primary text-xs font-medium">Current</span>
                         </div>
@@ -883,7 +882,7 @@ export function SyncedVideoPlayer({
   const brandedOverlayProgramRef = useRef<string>('')
   
   // Channel State
-  const [channels] = useState<Channel[]>(CHANNELS)
+  const [apiChannels, setApiChannels] = useState<ApiChannel[]>([])
   const [currentChannelId, setCurrentChannelId] = useState<string>(initialChannelId)
   const [showChannelSelector, setShowChannelSelector] = useState(false)
   
@@ -955,6 +954,12 @@ export function SyncedVideoPlayer({
     const schedule: VideoProgram[] = [nowPlaying, ...dedupedUpcoming]
     onProgramChange(nowPlaying.id, schedule)
   }, [onProgramChange])
+
+  // Load stored API channels from localStorage on mount
+  useEffect(() => {
+    const stored = getStoredApiChannels()
+    if (stored.length > 0) setApiChannels(stored)
+  }, [])
 
   // Load previous videos when channel changes
   useEffect(() => {
@@ -1144,14 +1149,18 @@ export function SyncedVideoPlayer({
   }, [currentProgram, getCurrentTime, getDuration, videoDuration, nextProgram])
 
   // ── Browser-side external API call (bypasses Cloudflare) ──
-  const EXTERNAL_API_BASE = 'https://api.deeniinfotech.com/api/tv-schedules'
+  const EXTERNAL_API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://api.deeniinfotech.com/api/tv-schedules'
 
   const fetchFromBrowserAPI = useCallback(async (channelId: string): Promise<any | null> => {
     try {
-      const lid = CHANNEL_LID_MAP[channelId] || 5
+      // Look up channel from localStorage — no static mapping needed
+      const storedChannels = getStoredApiChannels()
+      const channel = storedChannels.find(c => String(c.id) === channelId)
+      const lid = channel?.localizationId || '5'
+
       let apiUrl = `${EXTERNAL_API_BASE}/live?lid=${lid}`
-      if (isQuranChannel(channelId)) {
-        apiUrl += '&IS=true'
+      if (channel?.isQuran === true) {
+        apiUrl += '&iq=true'
       }
 
       console.log('📡 Browser → External API:', apiUrl)
@@ -1584,7 +1593,40 @@ export function SyncedVideoPlayer({
     }
   }, [isLoading, playerReady, volume, initializePlayer, loadVideo, seekTo, play, setYouTubeVolume, setYouTubeMuted, onChannelChange, onStartClick, getDuration, fetchFromBrowserAPI, notifyParentScheduleChange])
 
-  const handleFirstTimeStart = useCallback(() => {
+  const handleFirstTimeStart = useCallback(async () => {
+    // 1. Fetch channel list from live API and store in localStorage (only if not cached)
+    let channels = getStoredApiChannels()
+    if (channels.length === 0) {
+      try {
+        // Try live API directly (no JWT needed for channel list)
+        const res = await fetch('https://api.deeniinfotech.com/api/tv-channels')
+        if (res.ok) {
+          const json = await res.json()
+          if (json?.data?.length) {
+            saveApiChannels(json.data)
+            channels = json.data
+          }
+        }
+      } catch {
+        // ignore
+      }
+      // Fallback: Next.js API route (serves live data with static fallback for STG)
+      if (channels.length === 0) {
+        try {
+          const res = await fetch('/api/tv-channels')
+          const json = await res.json()
+          if (json?.data?.length) {
+            saveApiChannels(json.data)
+            channels = json.data
+          }
+        } catch { /* ignore */ }
+      }
+    }
+    if (channels.length > 0) {
+      setApiChannels(channels)
+    }
+
+    // 2. Start the player
     if (!currentChannelId) {
       setShowChannelSelector(true)
     } else {
@@ -2314,7 +2356,7 @@ export function SyncedVideoPlayer({
       <ChannelSelectorModal
         isOpen={showChannelSelector}
         onClose={() => { setShowChannelSelector(false); onChannelSelectorModalClose?.() }}
-        channels={channels}
+        channels={apiChannels}
         onSelectChannel={handleSelectChannel}
         currentChannelId={currentChannelId}
       />

@@ -8,10 +8,11 @@ import { ScheduleModal } from '@/components/schedule-modal'
 import { AboutModal } from '@/components/about-modal'
 import { ChannelSelector } from '@/components/channel-selector'
 import { VideoProgram } from '@/types/schedule'
-import { CHANNELS, getSavedChannel, saveChannel } from '@/lib/schedule-utils'
+import { getSavedChannel, saveChannel, ApiChannel, getStoredApiChannels, saveApiChannels } from '@/lib/schedule-utils'
 
 export default function Home() {
   const [activeChannelId, setActiveChannelId] = useState<string>('')
+  const [apiChannels, setApiChannels] = useState<ApiChannel[]>([])
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isChannelSelectorOpen, setIsChannelSelectorOpen] = useState(false)
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(false)
@@ -27,8 +28,12 @@ export default function Home() {
 
   // Check localStorage for saved channel on initial load
   useEffect(() => {
+    // Load stored API channels (if any) for the ChannelSelector
+    const stored = getStoredApiChannels()
+    if (stored.length > 0) setApiChannels(stored)
+
     const savedChannel = getSavedChannel()
-    if (savedChannel && CHANNELS.some(c => c.id === savedChannel)) {
+    if (savedChannel) {
       setActiveChannelId(savedChannel)
       setHasUserInteracted(true)
       setIsFirstTimeUser(false)
@@ -42,64 +47,33 @@ export default function Home() {
     setIsLoading(false)
   }, [])
 
-  // Fetch current program and schedule from API when channel changes (initial load only)
-  // The SyncedVideoPlayer handles 5-min syncing + instant updates via onProgramChange
+  // Fetch channel list for the ChannelSelector when it opens (first-time users)
   useEffect(() => {
-    if (!activeChannelId) return
-
-    const fetchCurrentProgram = async () => {
+    if (!isChannelSelectorOpen) return
+    if (apiChannels.length > 0) return // already loaded
+    ;(async () => {
       try {
-        const response = await fetch(`/api/current-video?channel=${activeChannelId}`)
-        const result = await response.json()
-        
-        if (result.currentProgram) {
-          // New API format
-          const currentId = result.currentProgram.ytVideoId
-          setCurrentProgramId(currentId)
-          
-          // Build live schedule from API data
-          const schedule: any[] = []
-          
-          // Add current program
-          schedule.push({
-            id: result.currentProgram.ytVideoId,
-            videoId: result.currentProgram.ytVideoId,
-            title: result.currentProgram.title,
-            duration: result.currentProgram.duration,
-            category: 'Lecture',
-            language: CHANNELS.find(c => c.id === activeChannelId)?.language || 'Bengali',
-            channelId: activeChannelId,
-          })
-          
-          // Add upcoming programs
-          if (result.upcomingPrograms && Array.isArray(result.upcomingPrograms)) {
-            result.upcomingPrograms.forEach((prog: any) => {
-              schedule.push({
-                id: prog.ytVideoId,
-                videoId: prog.ytVideoId,
-                title: prog.title,
-                duration: prog.duration,
-                category: 'Lecture',
-                language: CHANNELS.find(c => c.id === activeChannelId)?.language || 'Bengali',
-                channelId: activeChannelId,
-              })
-            })
+        const res = await fetch('https://api.deeniinfotech.com/api/tv-channels')
+        if (res.ok) {
+          const json = await res.json()
+          if (json?.data?.length) {
+            saveApiChannels(json.data)
+            setApiChannels(json.data)
+            return
           }
-          
-          setLiveSchedule(schedule)
-        } else if (result.success && result.data) {
-          // Fallback for old API format
-          setCurrentProgramId(result.data.program.id)
         }
-      } catch (error) {
-        console.error('Error fetching current program:', error)
-      }
-    }
-
-    fetchCurrentProgram()
-    // No polling interval here — the SyncedVideoPlayer handles periodic + instant syncs
-    // and pushes updates via onProgramChange callback
-  }, [activeChannelId])
+      } catch { /* ignore */ }
+      // Fallback: Next.js route (uses static data on STG)
+      try {
+        const res = await fetch('/api/tv-channels')
+        const json = await res.json()
+        if (json?.data?.length) {
+          saveApiChannels(json.data)
+          setApiChannels(json.data)
+        }
+      } catch { /* ignore */ }
+    })()
+  }, [isChannelSelectorOpen, apiChannels.length])
 
   // Called by SyncedVideoPlayer whenever the current program / schedule changes
   // (video ended → next started, API sync, queue shift, etc.)
@@ -213,7 +187,7 @@ export default function Home() {
       <ChannelSelector
         isOpen={isChannelSelectorOpen}
         onClose={handleCloseChannelSelector}
-        channels={CHANNELS}
+        channels={apiChannels}
         onSelectChannel={handleSelectChannel}
         currentChannelId={activeChannelId}
         isFirstTime={isFirstTimeUser}
@@ -223,7 +197,7 @@ export default function Home() {
       <ScheduleModal
         isOpen={activeModal === 'schedule'}
         onClose={handleCloseModal}
-        schedule={liveSchedule.length > 0 ? liveSchedule : (CHANNELS.find(c => c.id === activeChannelId)?.programs || [])}
+        schedule={liveSchedule}
         currentProgramId={currentProgramId}
       />
       
