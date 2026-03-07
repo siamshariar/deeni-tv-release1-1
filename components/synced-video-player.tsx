@@ -1594,33 +1594,29 @@ export function SyncedVideoPlayer({
   }, [isLoading, playerReady, volume, initializePlayer, loadVideo, seekTo, play, setYouTubeVolume, setYouTubeMuted, onChannelChange, onStartClick, getDuration, fetchFromBrowserAPI, notifyParentScheduleChange])
 
   const handleFirstTimeStart = useCallback(async () => {
-    // 1. Fetch channel list from live API and store in localStorage (only if not cached)
-    let channels = getStoredApiChannels()
+    // 1. Always fetch fresh channel list from live API
+    let channels: ApiChannel[] = []
+    try {
+      // Use JWT 'p' header to bypass Cloudflare (same as schedule API)
+      const json = await clientFetchWithAuth('https://api.deeniinfotech.com/api/tv-channels')
+      if (json?.data?.length) {
+        saveApiChannels(json.data)
+        channels = json.data
+      }
+    } catch {
+      // Live API failed — use localStorage cache
+      channels = getStoredApiChannels()
+    }
+    // Final fallback: Next.js API route (static data for STG)
     if (channels.length === 0) {
       try {
-        // Try live API directly (no JWT needed for channel list)
-        const res = await fetch('https://api.deeniinfotech.com/api/tv-channels')
-        if (res.ok) {
-          const json = await res.json()
-          if (json?.data?.length) {
-            saveApiChannels(json.data)
-            channels = json.data
-          }
+        const res = await fetch('/api/tv-channels')
+        const json = await res.json()
+        if (json?.data?.length) {
+          saveApiChannels(json.data)
+          channels = json.data
         }
-      } catch {
-        // ignore
-      }
-      // Fallback: Next.js API route (serves live data with static fallback for STG)
-      if (channels.length === 0) {
-        try {
-          const res = await fetch('/api/tv-channels')
-          const json = await res.json()
-          if (json?.data?.length) {
-            saveApiChannels(json.data)
-            channels = json.data
-          }
-        } catch { /* ignore */ }
-      }
+      } catch { /* ignore */ }
     }
     if (channels.length > 0) {
       setApiChannels(channels)
