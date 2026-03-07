@@ -20,13 +20,18 @@ const FALLBACK_DATA = [
 
 export async function GET() {
   try {
-    const res = await fetch(TV_CHANNELS_API, { cache: 'no-store' })
+    const res = await fetch(TV_CHANNELS_API, {
+      cache: 'no-store',
+      headers: { 'Accept': 'application/json' },
+    })
     if (res.ok) {
       const json = await res.json()
-      return NextResponse.json(json)
+      // Return live data with source flag so client can distinguish
+      return NextResponse.json({ ...json, _source: 'live' })
     }
   } catch {
-    // Live API unavailable — fall through to static fallback
+    // Live API unavailable (e.g. Cloudflare block server-side) — use fallback
   }
-  return NextResponse.json({ data: FALLBACK_DATA })
+  // Fallback: static data with same format as live API
+  return NextResponse.json({ data: FALLBACK_DATA, _source: 'fallback' })
 }
