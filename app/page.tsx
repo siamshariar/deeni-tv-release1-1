@@ -48,10 +48,9 @@ export default function Home() {
     setIsLoading(false)
   }, [])
 
-  // Fetch channel list for the ChannelSelector when it opens (first-time users)
+  // Always fetch fresh channel list from live API when channel selector opens
   useEffect(() => {
     if (!isChannelSelectorOpen) return
-    if (apiChannels.length > 0) return // already loaded
     ;(async () => {
       try {
         // Use JWT 'p' header to bypass Cloudflare (same as schedule API)
@@ -62,7 +61,13 @@ export default function Home() {
           return
         }
       } catch { /* ignore */ }
-      // Fallback: Next.js route (uses static data on STG)
+      // Live API failed — use localStorage cache if available
+      const cached = getStoredApiChannels()
+      if (cached.length > 0) {
+        setApiChannels(cached)
+        return
+      }
+      // Final fallback: Next.js route (static data for STG)
       try {
         const res = await fetch('/api/tv-channels')
         const json = await res.json()
@@ -72,7 +77,7 @@ export default function Home() {
         }
       } catch { /* ignore */ }
     })()
-  }, [isChannelSelectorOpen, apiChannels.length])
+  }, [isChannelSelectorOpen])
 
   // Called by SyncedVideoPlayer whenever the current program / schedule changes
   // (video ended → next started, API sync, queue shift, etc.)
