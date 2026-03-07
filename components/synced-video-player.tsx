@@ -1598,14 +1598,11 @@ export function SyncedVideoPlayer({
     let channels = getStoredApiChannels()
     if (channels.length === 0) {
       try {
-        // Try live API directly (no JWT needed for channel list)
-        const res = await fetch('https://api.deeniinfotech.com/api/tv-channels')
-        if (res.ok) {
-          const json = await res.json()
-          if (json?.data?.length) {
-            saveApiChannels(json.data)
-            channels = json.data
-          }
+        // Use JWT 'p' header to bypass Cloudflare (same as schedule API)
+        const json = await clientFetchWithAuth('https://api.deeniinfotech.com/api/tv-channels')
+        if (json?.data?.length) {
+          saveApiChannels(json.data)
+          channels = json.data
         }
       } catch {
         // ignore

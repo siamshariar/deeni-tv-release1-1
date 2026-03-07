@@ -9,6 +9,7 @@ import { AboutModal } from '@/components/about-modal'
 import { ChannelSelector } from '@/components/channel-selector'
 import { VideoProgram } from '@/types/schedule'
 import { getSavedChannel, saveChannel, ApiChannel, getStoredApiChannels, saveApiChannels } from '@/lib/schedule-utils'
+import { clientFetchWithAuth } from '@/lib/client-fetch'
 
 export default function Home() {
   const [activeChannelId, setActiveChannelId] = useState<string>('')
@@ -53,14 +54,12 @@ export default function Home() {
     if (apiChannels.length > 0) return // already loaded
     ;(async () => {
       try {
-        const res = await fetch('https://api.deeniinfotech.com/api/tv-channels')
-        if (res.ok) {
-          const json = await res.json()
-          if (json?.data?.length) {
-            saveApiChannels(json.data)
-            setApiChannels(json.data)
-            return
-          }
+        // Use JWT 'p' header to bypass Cloudflare (same as schedule API)
+        const json = await clientFetchWithAuth('https://api.deeniinfotech.com/api/tv-channels')
+        if (json?.data?.length) {
+          saveApiChannels(json.data)
+          setApiChannels(json.data)
+          return
         }
       } catch { /* ignore */ }
       // Fallback: Next.js route (uses static data on STG)
