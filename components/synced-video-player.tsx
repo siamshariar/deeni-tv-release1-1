@@ -166,9 +166,9 @@ const ChannelSelectorModal = ({
                     )}
                     
                     <div className="relative flex items-center gap-3">
-                      <div className="text-lg filter drop-shadow-lg">
+                      {/* <div className="text-lg filter drop-shadow-lg">
                         {channel.isQuran ? '📖' : '📺'}
-                      </div>
+                      </div> */}
                       <div className="flex-1 text-left">
                         <p className={`font-semibold ${
                           String(channel.id) === currentChannelId ? 'text-primary' : 'text-white'
@@ -261,7 +261,7 @@ const StartScreen = ({ onPlayClick }: { onPlayClick: () => void }) => {
             <img 
               src="/DeeniTV-V-2.png" 
               alt="Deeni.tv - Your Spiritual TV Experience"
-              className={isMobile ? 'h-8' : isTablet ? 'h-10' : 'h-12'}
+              className={isMobile ? 'h-5' : isTablet ? 'h-10' : 'h-12'}
             />
           </motion.div>
           
@@ -514,9 +514,9 @@ const BrandedLoadingOverlay = ({
                 className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3"
               >
                 <p className="text-white/50 uppercase tracking-wider font-medium text-[7px] sm:text-[9px] md:text-[10px] mb-0.5 sm:mb-1">
-                  Now Loading
+                  Watching
                 </p>
-                <h3 className="text-white font-bold leading-tight line-clamp-2 text-xs sm:text-sm md:text-base lg:text-lg">
+                <h3 className="text-white font-bold leading-tight line-clamp-2 text-sm sm:text-base md:text-lg lg:text-xl">
                   {programName || 'Loading program...'}
                 </h3>
               </motion.div>
@@ -880,6 +880,11 @@ export function SyncedVideoPlayer({
   // Branded loading overlay state - event-based, not timer-based
   const [showBrandedOverlay, setShowBrandedOverlay] = useState(false)
   const brandedOverlayProgramRef = useRef<string>('')
+  // iframeVisible — keeps the iframe container at opacity:0 until the REAL video
+  // fires its first PLAYING event.  Prevents the primer (zoo) video from flashing
+  // on screen.  Once true it stays true; subsequent transitions are hidden by
+  // BrandedLoadingOverlay sitting on top instead.
+  const [iframeVisible, setIframeVisible] = useState(false)
   
   // Channel State
   const [apiChannels, setApiChannels] = useState<ApiChannel[]>([])
@@ -932,6 +937,10 @@ export function SyncedVideoPlayer({
   const { 
     containerRef: youtubeContainerRef, 
     initializePlayer, 
+    primePlayer,
+    unmuteAndResume,
+    setPlayerCallbacks,
+    isPrimedRef,
     loadVideo, 
     getDuration,
     setVolume: setYouTubeVolume,
@@ -960,6 +969,18 @@ export function SyncedVideoPlayer({
     const stored = getStoredApiChannels()
     if (stored.length > 0) setApiChannels(stored)
   }, [])
+
+  // ── iOS silent primer ────────────────────────────────────────────────────────
+  // While the start screen is visible, silently initialise a muted YouTube player
+  // in the background.  iOS Safari allows muted autoplay without a gesture, so
+  // this "warms up" the WebView's video permission context.  When the user later
+  // taps "Start Watching" we can call unmuteAndResume() synchronously inside that
+  // gesture (before any async work), granting audio permission for the session.
+  useEffect(() => {
+    if (!showStartScreen) return        // only prime on the start screen
+    if (isPrimedRef.current) return     // already primed — don't recreate
+    primePlayer()                       // fire-and-forget; errors are swallowed inside
+  }, [showStartScreen, primePlayer, isPrimedRef])
 
   // Load previous videos when channel changes
   useEffect(() => {
@@ -1086,18 +1107,28 @@ export function SyncedVideoPlayer({
       setYouTubeVolume(volume)
       setYouTubeMuted(isMuted)
       
-      // Small delay to ensure video is loaded
-      setTimeout(() => {
-        play()
-        console.log('▶️ Playing next video now')
-        isTransitioningRef.current = false
+      // // Small delay to ensure video is loaded
+      // setTimeout(() => {
+      //   play()
+      //   console.log('▶️ Playing next video now')
+      //   isTransitioningRef.current = false
         
-        // Get duration from YouTube API
-        const duration = getDuration()
-        if (duration && duration > 0) {
-          setVideoDuration(duration)
-        }
-      }, 200)
+      //   // Get duration from YouTube API
+      //   const duration = getDuration()
+      //   if (duration && duration > 0) {
+      //     setVideoDuration(duration)
+      //   }
+      // }, 10)
+      // TODO: Is this delay mandatory??
+      play()
+      console.log('▶️ Playing next video now')
+      isTransitioningRef.current = false
+      
+      // Get duration from YouTube API
+      const duration = getDuration()
+      if (duration && duration > 0) {
+        setVideoDuration(duration)
+      }
 
       // ── Immediate API sync to replenish queue with authoritative data ──
       // Runs quickly after transition so the schedule / previous list updates fast.
@@ -1139,6 +1170,10 @@ export function SyncedVideoPlayer({
       // Check if video is near the end (less than 0.5 seconds remaining)
       if (actualDuration > 0 && remaining <= 0.5 && !isTransitioningRef.current && nextProgram) {
         console.log('⚠️ Video ending soon, preparing next video...')
+        setShowBrandedOverlay(true)
+        setIsLoading(false)
+        setShowStartScreen(false)
+        
         if (videoEndTimeoutRef.current) {
           clearTimeout(videoEndTimeoutRef.current)
         }
@@ -1356,6 +1391,9 @@ export function SyncedVideoPlayer({
       const timeRemaining = result.currentProgram.duration - result.currentProgram.seekTo
       
       brandedOverlayProgramRef.current = program.title
+
+      setIsLoading(false)
+      setShowStartScreen(false)
       setShowBrandedOverlay(true)
       setCurrentProgram(program)
       setCurrentTime(startTime)
@@ -1450,7 +1488,7 @@ export function SyncedVideoPlayer({
           volume: volume,
           muted: isIOS, // start muted on iOS so Safari allows autoplay; user taps to unmute
           onReady: () => {
-            console.log('✅ Player ready after channel switch')
+            console.log('✅ 11 Player ready after channel switch')
             setPlayerReady(true)
             setIsLoading(false)
             setShowStartScreen(false) // Important: Reset start screen
@@ -1473,19 +1511,26 @@ export function SyncedVideoPlayer({
           onStateChange: (state) => {
             if (!mountedRef.current) return
             
-            console.log('🎬 YouTube state changed:', state)
+            console.log('🎬 11 YouTube state changed:', state)
             
             if (state === YT_STATE.ENDED) {
-              console.log('📺 Video ended event received - playing next')
+              setShowBrandedOverlay(true)
+              setIsLoading(false)
+              setShowStartScreen(false)
+              console.log('📺 11 Video ended event received - playing next')
               if (videoEndTimeoutRef.current) {
                 clearTimeout(videoEndTimeoutRef.current)
               }
               // Use ref so we always call the LATEST closure (not the stale one from init)
               playNextVideoRef.current()
             } else if (state === YT_STATE.PLAYING) {
-              console.log('▶️ Video is now playing')
+              console.log('▶️ 11 Video is now playing')
+              setIsLoading(false);
               setShowStartScreen(false) // Ensure start screen is hidden
-              setShowBrandedOverlay(false) // Hide branded overlay when playback starts
+              setIframeVisible(true)
+              setTimeout(() => {
+                setShowBrandedOverlay(false) // Hide branded overlay when playback starts
+              }, 3000);
             } else if (state === YT_STATE.PAUSED) {
               console.log('⏸️ Video paused - resuming')
               play()
@@ -1513,6 +1558,77 @@ export function SyncedVideoPlayer({
             }
           }
         })
+      } else if (isPrimedRef.current) {
+        // ── iOS fast-path: REUSE the primed player — do NOT destroy it ────────
+        // The primed YT.Player already has iOS's audio-unlock context from the
+        // synchronous unmuteAndResume() call in handleFirstTimeStart.  Calling
+        // initializePlayer would nuke that player and create a new one OUTSIDE
+        // the gesture window → iOS blocks audio again → stuck on loading.
+        //
+        // Instead:
+        //   1. setPlayerCallbacks() — swap the no-op event refs to real handlers
+        //   2. loadVideo() — calls loadVideoById on the SAME player instance
+        // The same YT.Player stays alive, audio stays unlocked, events flow.
+        console.log('🍎 iOS primer path — reusing primed player (no destroy)')
+        isPrimedRef.current = false // consumed; subsequent loads go through normal path
+
+        // 1. Wire up real event handlers via the delegating refs
+        setPlayerCallbacks({
+          onReady: () => {
+            // This fires on initial creation only; for loadVideoById it won't fire
+            // again — we handle everything via onStateChange below.
+          },
+          onStateChange: (state: number) => {
+            if (!mountedRef.current) return
+            console.log('🎬 🍎 iOS state changed:', state)
+            if (state === YT_STATE.ENDED) {
+              setShowBrandedOverlay(true)
+              setIsLoading(false)
+              setShowStartScreen(false)
+              if (videoEndTimeoutRef.current) clearTimeout(videoEndTimeoutRef.current)
+              playNextVideoRef.current()
+            } else if (state === YT_STATE.PLAYING) {
+              console.log('▶️ 🍎 Real video is PLAYING on iOS')
+              setIsLoading(false)
+              setShowStartScreen(false)
+              setPlayerReady(true)
+              setIframeVisible(true) // Reveal iframe — real video is now rendering
+              setIsMuted(false)
+              onStartClick?.()
+              setTimeout(() => setShowBrandedOverlay(false), 3000)
+            } else if (state === YT_STATE.PAUSED) {
+              // iOS sometimes auto-pauses; resume
+              play()
+            } else if (state === YT_STATE.BUFFERING) {
+              console.log('⏳ 🍎 Buffering...')
+            } else if (state === YT_STATE.CUED) {
+              play()
+            }
+          },
+          onDurationChange: (duration: number) => {
+            if (duration && duration > 0) setVideoDuration(duration)
+          },
+          onError: (code: number, msg: string) => {
+            console.error('🍎 Player error:', code, msg)
+            if (code === 2 || code === 5 || code === 100) {
+              setApiError(`Playback error: ${msg}`)
+            }
+            setIsLoading(false)
+          },
+        })
+
+        // 2. Swap the video on the existing player — keeps audio unlock alive
+        lastVideoIdRef.current = program.videoId
+        const loaded = loadVideo(program.videoId, Math.floor(startTime))
+        if (loaded) {
+          console.log('✅ 🍎 Video swapped on primed player')
+          setYouTubeVolume(volume)
+          // Don't call setYouTubeMuted(false) — unmuteAndResume already did it
+          // synchronously in the gesture. Calling it again is harmless but redundant.
+        } else {
+          console.error('❌ 🍎 loadVideo failed on primed player')
+          setIsLoading(false)
+        }
       } else {
         await initializePlayer({
           videoId: program.videoId,
@@ -1520,7 +1636,7 @@ export function SyncedVideoPlayer({
           volume: volume,
           muted: isIOS, // start muted on iOS so Safari allows autoplay; user taps to unmute
           onReady: () => {
-            console.log('✅ Player ready - starting playback')
+            console.log('✅ 22 Player ready - starting playback')
             setPlayerReady(true)
             setIsLoading(false)
             setShowStartScreen(false)
@@ -1548,28 +1664,37 @@ export function SyncedVideoPlayer({
             console.log('🎬 YouTube state changed:', state)
             
             if (state === YT_STATE.ENDED) {
-              console.log('📺 Video ended event received - playing next')
+              console.log('📺 22 Video ended event received - playing next')
+              // setIsLoading(true)
+              setShowBrandedOverlay(true)
+              setIsLoading(false)
+              setShowStartScreen(false)
               if (videoEndTimeoutRef.current) {
                 clearTimeout(videoEndTimeoutRef.current)
               }
               // Use ref so we always call the LATEST closure (not the stale one from init)
               playNextVideoRef.current()
             } else if (state === YT_STATE.PLAYING) {
-              console.log('▶️ Video is now playing')
-              setShowBrandedOverlay(false) // Hide branded overlay when playback starts
+              console.log('▶️ 22 Video is now playing')
+              setIsLoading(false);
+              setIframeVisible(true)
+              setTimeout(() => {
+                setShowBrandedOverlay(false) // Hide branded overlay when playback starts
+              }, 3000);
+              
             } else if (state === YT_STATE.PAUSED) {
-              console.log('⏸️ Video paused - resuming')
+              console.log('⏸️ 22 Video paused - resuming')
               play()
             } else if (state === YT_STATE.BUFFERING) {
-              console.log('⏳ Video buffering...')
+              console.log('⏳ 22 Video buffering...')
             } else if (state === YT_STATE.CUED) {
-              console.log('🎬 Video cued - playing')
+              console.log('🎬 22 Video cued - playing')
               play()
             }
           },
           onDurationChange: (duration) => {
             if (duration && duration > 0) {
-              console.log('📏 Video duration:', duration)
+              console.log('📏 22 Video duration:', duration)
               setVideoDuration(duration)
             }
           },
@@ -1579,7 +1704,7 @@ export function SyncedVideoPlayer({
               setApiError(`Playback error: ${msg}`)
               setIsLoading(false)
             } else {
-              console.log('⚠️ Non-critical error, continuing playback')
+              console.log('⚠️ 22 Non-critical error, continuing playback')
               setIsLoading(false)
             }
           }
@@ -1591,32 +1716,43 @@ export function SyncedVideoPlayer({
       setApiError(error instanceof Error ? error.message : 'Failed to load video')
       setIsLoading(false)
     }
-  }, [isLoading, playerReady, volume, initializePlayer, loadVideo, seekTo, play, setYouTubeVolume, setYouTubeMuted, onChannelChange, onStartClick, getDuration, fetchFromBrowserAPI, notifyParentScheduleChange])
+  }, [isLoading, playerReady, isPrimedRef, volume, initializePlayer, loadVideo, seekTo, play, setYouTubeVolume, setYouTubeMuted, onChannelChange, onStartClick, getDuration, fetchFromBrowserAPI, notifyParentScheduleChange])
 
   const handleFirstTimeStart = useCallback(async () => {
-    // 1. Always fetch fresh channel list from live API
-    let channels: ApiChannel[] = []
-    try {
-      // Use JWT 'p' header to bypass Cloudflare (same as schedule API)
-      const json = await clientFetchWithAuth('https://api.deeniinfotech.com/api/tv-channels')
-      if (json?.data?.length) {
-        saveApiChannels(json.data)
-        channels = json.data
-      }
-    } catch {
-      // Live API failed — use localStorage cache
-      channels = getStoredApiChannels()
+    // ── Step 0 (synchronous — MUST be first, before any await) ──────────────
+    // On iOS the user gesture window closes as soon as the call stack goes async.
+    // Calling unmuteAndResume() HERE, before any fetch/await, tells the browser
+    // "the user intentionally enabled audio" and unlocks sound for this player
+    // instance.  loadVideoById() later will reuse the same unlocked player, so
+    // the real video starts with audio automatically.
+    if (isPrimedRef.current) {
+      unmuteAndResume(volume)
     }
-    // Final fallback: Next.js API route (static data for STG)
+
+    // 1. Fetch channel list from live API and store in localStorage (only if not cached)
+    let channels = getStoredApiChannels()
     if (channels.length === 0) {
       try {
-        const res = await fetch('/api/tv-channels')
-        const json = await res.json()
-        if (json?.data?.length) {
-          saveApiChannels(json.data)
-          channels = json.data
-        }
-      } catch { /* ignore */ }
+        // Try live API directly (no JWT needed for channel list)
+        const res = await clientFetchWithAuth('https://api.deeniinfotech.com/api/tv-channels')
+        if (res?.data?.length) {
+            saveApiChannels(res.data)
+            channels = res.data
+          }
+      } catch {
+        // ignore
+      }
+      // Fallback: Next.js API route (serves live data with static fallback for STG)
+      if (channels.length === 0) {
+        try {
+          const res = await fetch('/api/tv-channels')
+          const json = await res.json()
+          if (json?.data?.length) {
+            saveApiChannels(json.data)
+            channels = json.data
+          }
+        } catch { /* ignore */ }
+      }
     }
     if (channels.length > 0) {
       setApiChannels(channels)
@@ -1633,7 +1769,7 @@ export function SyncedVideoPlayer({
       setIsLoading(true)
       loadChannel(currentChannelId)
     }
-  }, [currentChannelId, loadChannel])
+  }, [currentChannelId, loadChannel, isPrimedRef, unmuteAndResume, volume])
 
   const handleSelectChannel = useCallback((channelId: string) => {
     setShowChannelSelector(false)
@@ -1823,6 +1959,7 @@ export function SyncedVideoPlayer({
     setPlayerReady(false)
     setCurrentProgram(null)
     setApiError(null)
+    setIframeVisible(false) // hide iframe until next real PLAYING event
     destroy()
     
     // Reload same channel — previousVideos state and localStorage are preserved
@@ -2060,8 +2197,15 @@ export function SyncedVideoPlayer({
             isFullscreen ? 'rounded-none border-0' : 'rounded-t-2xl md:rounded-t-3xl rounded-b-none'
           }`}
         >
-          {/* YouTube iframe container */}
-          <div ref={youtubeContainerRef} className="absolute inset-0 w-full h-full" />
+          {/* YouTube iframe container — stays opacity:0 until the real video fires
+              its first PLAYING event (iframeVisible).  This hides the primer video
+              AND the brief blank iframe during player init.  Subsequent video
+              transitions are covered by BrandedLoadingOverlay instead. */}
+          <div
+            ref={youtubeContainerRef}
+            className="absolute inset-0 w-full h-full"
+            style={{ opacity: iframeVisible ? 1 : 0 }}
+          />
           <div className="absolute inset-0 w-full h-full pointer-events-auto" />
           
           {/* Branded Loading Overlay - Shows during YouTube loading, hides on PLAYING event */}
@@ -2075,15 +2219,16 @@ export function SyncedVideoPlayer({
           {/* START SCREEN */}
           {showStartScreen && !isLoading && !apiError && (
             <StartScreen onPlayClick={handleFirstTimeStart} />
+            // TODO: Load iframe muted with default video
           )}
 
           {/* Tap-to-Unmute Screen */}
           {/* Full-screen overlay (like StartScreen) — shown whenever player is ready */}
           {/* but audio is muted. Condition: isMuted && playerReady (works on both    */}
           {/* iOS and non-iOS; on iOS this appears right after the player starts).    */}
-          {isMuted && playerReady && (
+          {/* {isMuted && playerReady && (
             <TapToUnmuteScreen onUnmuteClick={toggleMute} />
-          )}
+          )} */}
           
           {/* Loading overlay */}
           {isLoading && (
@@ -2297,7 +2442,7 @@ export function SyncedVideoPlayer({
         </div>
 
         {/* Bottom Controls - OUTSIDE video frame - ALWAYS VISIBLE - Unified with iframe */}
-        {!showStartScreen && !isLoading && !apiError && playerReady && currentProgram && (
+        {/* {!showStartScreen && !isLoading && !apiError && playerReady && currentProgram && ( */}
           <div className="w-full">
                 <div className={`bg-black/60 backdrop-blur-xl border border-white/10 border-t-0 rounded-b-2xl md:rounded-b-3xl ${
                   isMobile ? 'px-3 py-2' : 'px-6 py-4'
@@ -2343,7 +2488,7 @@ export function SyncedVideoPlayer({
                   </div>
                 </div>
               </div>
-        )}
+        {/* )} */}
 
         {/* Program Info Section - REMOVED to match web style (no extra content below iframe) */}
       </div>
@@ -2379,7 +2524,7 @@ export function SyncedVideoPlayer({
           setIsMuted(false)
           setMainPlayerPaused(false)
           // Do NOT close the previously watched modal - it stays open
-          // Do NOT reload or restart the TV
+          // Do NOT reload or restart the live TV
         }}
       />
     </div>
